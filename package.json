@@ -1,0 +1,15 @@
+{
+  "name": "frontend-elm",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "elm-spa server",
+    "add-page": "elm-spa add",
+    "build": "elm-spa build",
+    "watch": "elm-spa watch"
+  },
+  "dependencies": {
+    "elm-spa": "^6.0.4"
+  }
+}
