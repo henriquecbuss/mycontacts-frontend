@@ -7,6 +7,7 @@ type alias Theme =
     { colors :
         { background : Css.Color
         , foreground : Css.Color
+        , white : Css.Color
         , primary :
             { lightest : Css.Color
             , lighter : Css.Color
@@ -35,6 +36,7 @@ default =
     { colors =
         { background = Css.hex "f6f5fc"
         , foreground = Css.hex "222222"
+        , white = Css.hex "ffffff"
         , primary =
             { lightest = Css.hex "e0e3ff"
             , lighter = Css.hex "a8b0f4"

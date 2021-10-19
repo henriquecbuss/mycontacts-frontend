@@ -1,11 +1,14 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+import Contact
 import Css
+import Css.Global
 import Css.Transitions
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
-import Html.Styled exposing (a, div, h1, hr, input, strong, text)
-import Html.Styled.Attributes exposing (css, href, placeholder)
+import Html.Styled exposing (a, button, div, h1, hr, img, input, strong, text, ul)
+import Html.Styled.Attributes exposing (css, href, placeholder, src)
+import Html.Styled.Events exposing (onClick)
 import Page
 import Request
 import Shared
@@ -28,12 +31,23 @@ page shared req =
 
 
 type alias Model =
-    {}
+    { sortDirection : SortDirection
+    , contacts : List Contact.Model
+    }
+
+
+type SortDirection
+    = Asc
+    | Desc
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( { sortDirection = Asc
+      , contacts = Contact.mockContacts
+      }
+    , Cmd.none
+    )
 
 
 
@@ -41,14 +55,24 @@ init =
 
 
 type Msg
-    = ReplaceMe
+    = ClickedToggleSortDirection
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ReplaceMe ->
-            ( model, Cmd.none )
+        ClickedToggleSortDirection ->
+            ( { model
+                | sortDirection =
+                    case model.sortDirection of
+                        Asc ->
+                            Desc
+
+                        Desc ->
+                            Asc
+              }
+            , Cmd.none
+            )
 
 
 
@@ -78,6 +102,15 @@ view theme model =
             ]
         ]
         []
+    , ordenationButton theme model
+    , ul
+        [ css
+            [ Css.listStyle Css.none
+            , Css.displayFlex
+            , Css.flexDirection Css.column
+            ]
+        ]
+        (List.map (Contact.view theme) model.contacts)
     ]
 
 
@@ -143,4 +176,48 @@ header theme =
             , href (Gen.Route.toHref Gen.Route.Home_)
             ]
             [ text "Novo contato" ]
+        ]
+
+
+ordenationButton : Theme -> Model -> Html.Styled.Html Msg
+ordenationButton theme model =
+    button
+        [ onClick ClickedToggleSortDirection
+        , css
+            [ Css.backgroundColor Css.transparent
+            , Css.border Css.zero
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.marginBottom (Css.rem 0.5)
+            , Css.cursor Css.pointer
+            , Css.color theme.colors.primary.main
+            , Css.hover
+                [ Css.color theme.colors.primary.light
+                , Css.Global.children [ Css.Global.img [ Css.opacity (Css.num 0.8) ] ]
+                ]
+            , Css.active
+                [ Css.color theme.colors.primary.dark
+                , Css.Global.children [ Css.Global.img [ Css.opacity (Css.num 1) ] ]
+                ]
+            ]
+        ]
+        [ strong [] [ text "Nome" ]
+        , img
+            [ src "/icons/arrowUp.svg"
+            , css
+                [ Css.marginLeft (Css.rem 0.5)
+                , Css.transform
+                    (Css.rotateX
+                        (case model.sortDirection of
+                            Asc ->
+                                Css.deg 180
+
+                            Desc ->
+                                Css.deg 0
+                        )
+                    )
+                , Css.Transitions.transition [ Css.Transitions.transform3 150 0 Css.Transitions.easeInOut ]
+                ]
+            ]
+            []
         ]
