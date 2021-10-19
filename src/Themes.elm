@@ -30,10 +30,6 @@ type alias Theme =
     }
 
 
-
--- default : Theme compatible units
-
-
 default : Theme
 default =
     { colors =

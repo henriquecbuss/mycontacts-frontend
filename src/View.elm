@@ -1,9 +1,10 @@
 module View exposing (View, map, none, placeholder, toBrowserDocument)
 
 import Browser
-import Css exposing (backgroundColor, borderBox, boxSizing, color, fontFamilies, fontFamily, fontSize, margin, padding, px, sansSerif, zero)
+import Css exposing (backgroundColor, borderBox, boxSizing, color, fontFamilies, fontSize, margin, padding, px, sansSerif, zero)
 import Css.Global exposing (body, everything, global)
-import Html.Styled exposing (div)
+import Html.Styled exposing (div, img)
+import Html.Styled.Attributes exposing (css, src)
 import Themes exposing (Theme)
 
 
@@ -43,13 +44,35 @@ toBrowserDocument theme view =
                 , color theme.colors.foreground
                 ]
             ]
-        , defaultContainer view
+        , defaultContainer (header :: view)
         ]
             |> List.map Html.Styled.toUnstyled
     }
 
 
+header : Html.Styled.Html msg
+header =
+    div
+        [ css
+            [ Css.marginTop (Css.px 74)
+            , Css.marginBottom (Css.px 48)
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.justifyContent Css.center
+            ]
+        ]
+        [ img [ src "/images/logo.svg" ] [] ]
+
+
 defaultContainer : List (Html.Styled.Html msg) -> Html.Styled.Html msg
 defaultContainer children =
-    div []
-        []
+    div
+        [ css
+            [ Css.width (Css.pct 100)
+            , Css.maxWidth (Css.calc (Css.px 500) Css.plus (Css.rem 1))
+            , Css.margin2 zero Css.auto
+            , Css.padding2 zero (Css.rem 1)
+            , Css.paddingBottom (Css.px 100)
+            ]
+        ]
+        children
