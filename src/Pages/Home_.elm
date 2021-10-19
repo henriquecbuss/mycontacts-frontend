@@ -171,9 +171,7 @@ header theme =
                     [ Css.backgroundColor theme.colors.primary.light
                     ]
                 ]
-
-            -- TODO - Use new route when it's ready
-            , href (Gen.Route.toHref Gen.Route.Home_)
+            , href (Gen.Route.toHref Gen.Route.New)
             ]
             [ text "Novo contato" ]
         ]

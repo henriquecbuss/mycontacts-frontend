@@ -1,4 +1,4 @@
-module Category exposing (Category(..), toString, view)
+module Category exposing (Category(..), list, toString, view)
 
 import Css
 import Html.Styled exposing (small, text)
@@ -10,6 +10,8 @@ type
     Category
     -- TODO - Not expose (..)
     = Instagram
+    | LinkedIn
+    | GitHub
 
 
 toString : Category -> String
@@ -17,6 +19,17 @@ toString category =
     case category of
         Instagram ->
             "Instagram"
+
+        LinkedIn ->
+            "LinkedIn"
+
+        GitHub ->
+            "GitHub"
+
+
+list : List Category
+list =
+    [ Instagram, LinkedIn, GitHub ]
 
 
 view : Theme -> Category -> Html.Styled.Html msg

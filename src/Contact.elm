@@ -58,6 +58,7 @@ view theme (Contact model) =
                 ]
                 [ text content ]
 
+        actionIconStyle : Css.Style
         actionIconStyle =
             Css.batch
                 [ Css.cursor Css.pointer
