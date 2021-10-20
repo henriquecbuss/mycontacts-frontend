@@ -47,6 +47,7 @@ form theme { onSubmit, action, loading, state, fields } =
             [ fields
             , [ UI.button
                     theme
+                    UI.Primary
                     { onClick = onSubmit
                     , disabled = onSubmit == Nothing
                     }
