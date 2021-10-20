@@ -47,13 +47,8 @@ fromString category =
 decoder : Decoder Category
 decoder =
     Decode.string
-        |> Debug.log "INSIDE CATEGORY"
         |> Decode.andThen
             (\stringCategory ->
-                let
-                    _ =
-                        Debug.log "STRING CATEGORY" stringCategory
-                in
                 case String.toLower stringCategory of
                     "instagram" ->
                         Decode.succeed Instagram

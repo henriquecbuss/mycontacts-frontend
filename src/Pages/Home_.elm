@@ -11,6 +11,7 @@ import Gen.Route
 import Html.Styled exposing (a, button, div, h1, hr, img, input, strong, text, ul)
 import Html.Styled.Attributes exposing (css, href, placeholder, src)
 import Html.Styled.Events exposing (onClick)
+import Html.Styled.Keyed
 import Page
 import Request
 import Shared
@@ -135,17 +136,38 @@ view theme model =
             ordenationButton theme model
     , case model.contacts of
         Loading ->
-            text ""
-
-        Loaded contacts ->
-            ul
+            Html.Styled.Keyed.ul
                 [ css
                     [ Css.listStyle Css.none
                     , Css.displayFlex
                     , Css.flexDirection Css.column
                     ]
                 ]
-                (List.indexedMap (Contact.view theme) contacts)
+                (List.range 1 5
+                    |> List.map
+                        (\index ->
+                            ( String.fromInt index
+                            , Contact.viewLoading theme index
+                            )
+                        )
+                )
+
+        Loaded contacts ->
+            Html.Styled.Keyed.ul
+                [ css
+                    [ Css.listStyle Css.none
+                    , Css.displayFlex
+                    , Css.flexDirection Css.column
+                    ]
+                ]
+                (List.indexedMap
+                    (\index contact ->
+                        ( Contact.getId contact
+                        , Contact.view theme index contact
+                        )
+                    )
+                    contacts
+                )
 
         WithError _ ->
             text ""

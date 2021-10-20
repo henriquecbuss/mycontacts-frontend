@@ -1,10 +1,20 @@
-module Contact exposing (Input, Model, Output, decoder, form, mockContacts, optionalField, view)
+module Contact exposing
+    ( Input
+    , Model
+    , Output
+    , decoder
+    , form
+    , getId
+    , optionalField
+    , view
+    , viewLoading
+    )
 
 import Category exposing (Category(..))
 import Css
 import Css.Animations
 import Form
-import Html.Styled exposing (a, button, div, img, li, small, strong, text)
+import Html.Styled exposing (a, button, div, img, li, small, span, strong, text)
 import Html.Styled.Attributes exposing (css, src)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP
@@ -23,30 +33,13 @@ type Model
         }
 
 
-mockContacts : List Model
-mockContacts =
-    [ Contact
-        { id = "1"
-        , name = "Henrique"
-        , email = Just "henrique@mail.com"
-        , phone = Just "47988494288"
-        , category = Nothing
-        }
-    , Contact
-        { id = "2"
-        , name = "José"
-        , email = Just "jose+1@mail.com"
-        , phone = Just "1231231231"
-        , category = Just Instagram
-        }
-    , Contact
-        { id = "3"
-        , name = "Rose"
-        , email = Just "rose@mail.com"
-        , phone = Just "3123123123"
-        , category = Nothing
-        }
-    ]
+getId : Model -> String
+getId (Contact { id }) =
+    id
+
+
+
+-- VIEW
 
 
 view : Theme -> Int -> Model -> Html.Styled.Html msg
@@ -146,6 +139,89 @@ view theme index (Contact model) =
             , button
                 [ css [ actionIconStyle, Css.marginLeft (Css.rem 0.5) ] ]
                 [ img [ src "/icons/delete.svg" ] [] ]
+            ]
+        ]
+
+
+viewLoading : Theme -> Int -> Html.Styled.Html msg
+viewLoading theme index =
+    let
+        pulse =
+            Css.Animations.keyframes
+                [ ( 0, [ Css.Animations.opacity (Css.num 0.7) ] )
+                , ( 50, [ Css.Animations.opacity (Css.num 0.3) ] )
+                , ( 100, [ Css.Animations.opacity (Css.num 0.7) ] )
+                ]
+    in
+    li
+        [ css
+            [ Css.displayFlex
+            , Css.justifyContent Css.spaceBetween
+            , Css.alignItems Css.center
+            , Css.padding (Css.rem 1)
+            , Css.borderRadius theme.borderRadius
+            , Css.backgroundColor theme.colors.white
+            , Css.boxShadow4 Css.zero (Css.px 4) (Css.px 10) (Css.rgba 0 0 0 0.04)
+            , Css.marginTop (Css.rem 1)
+            , Css.firstChild [ Css.marginTop Css.zero ]
+            , Css.animationDuration (Css.ms 500)
+            , Css.animationDelay (Css.ms (100 * toFloat index))
+            , Css.property "animation-fill-mode" "both"
+            , Css.animationName
+                (Css.Animations.keyframes
+                    [ ( 0
+                      , [ Css.Animations.opacity Css.zero
+                        , Css.Animations.transform [ Css.translateY (Css.pct 50) ]
+                        ]
+                      )
+                    , ( 100
+                      , [ Css.Animations.opacity (Css.num 1)
+                        , Css.Animations.transform [ Css.translateY Css.zero ]
+                        ]
+                      )
+                    ]
+                )
+            ]
+        ]
+        [ div
+            [ css
+                [ Css.displayFlex
+                , Css.flexDirection Css.column
+                , Css.width (Css.pct 100)
+                , Css.property "gap" "4px"
+                , Css.animationName pulse
+                , Css.animationDuration (Css.ms 2000)
+                , Css.animationDelay (Css.ms (100 * toFloat index))
+                , Css.animationIterationCount Css.infinite
+                ]
+            ]
+            [ span
+                [ css
+                    [ Css.height (Css.rem 0.75)
+                    , Css.width (Css.pct 60)
+                    , Css.backgroundColor theme.colors.gray.light
+                    , Css.borderRadius theme.borderRadius
+                    ]
+                ]
+                []
+            , span
+                [ css
+                    [ Css.height (Css.rem 0.75)
+                    , Css.width (Css.pct 50)
+                    , Css.backgroundColor theme.colors.gray.lightest
+                    , Css.borderRadius theme.borderRadius
+                    ]
+                ]
+                []
+            , span
+                [ css
+                    [ Css.height (Css.rem 0.75)
+                    , Css.width (Css.pct 40)
+                    , Css.backgroundColor theme.colors.gray.lightest
+                    , Css.borderRadius theme.borderRadius
+                    ]
+                ]
+                []
             ]
         ]
 
@@ -255,10 +331,6 @@ form =
 
 decoder : Decoder Model
 decoder =
-    let
-        _ =
-            Debug.log "INSIDE CONTACT DECODER" True
-    in
     Decode.succeed
         (\id name email phone category ->
             Contact
@@ -273,9 +345,7 @@ decoder =
         |> JDP.required "name" Decode.string
         |> optionalField "email" Decode.string
         |> optionalField "phone" Decode.string
-        |> Debug.log "INSIDE 2"
-        |> optionalField "category" Category.decoder
-        |> Debug.log "AFTER"
+        |> optionalField "category_name" Category.decoder
 
 
 optionalField : String -> Decoder a -> Decoder (Maybe a -> b) -> Decoder b
