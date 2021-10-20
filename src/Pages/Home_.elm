@@ -38,7 +38,7 @@ page shared _ =
 type alias Model =
     { sortDirection : Api.HttpClient.SortDirection
     , contacts : ContactsStatus
-    , showModal : Bool
+    , deletingContact : Maybe Contact.Model
     }
 
 
@@ -56,7 +56,7 @@ init =
     in
     ( { sortDirection = defaultSortDirection
       , contacts = Loading
-      , showModal = True
+      , deletingContact = Nothing
       }
     , Api.Contact.list defaultSortDirection CompletedLoadContacts
     )
@@ -71,6 +71,9 @@ type Msg
     | CompletedLoadContacts (Api.HttpClient.Response (List Contact.Model))
     | RequestedRetryContacts
     | ClosedModal
+    | ClickedDeleteContact Contact.Model
+    | ConfirmedDeleteContact Contact.Model
+    | CompletedDeleteContact (Api.HttpClient.Response ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -112,7 +115,21 @@ update msg model =
             )
 
         ClosedModal ->
-            ( { model | showModal = False }, Cmd.none )
+            ( { model | deletingContact = Nothing }, Cmd.none )
+
+        ClickedDeleteContact contact ->
+            ( { model | deletingContact = Just contact }, Cmd.none )
+
+        ConfirmedDeleteContact contact ->
+            ( { model
+                | contacts = Loading
+                , deletingContact = Nothing
+              }
+            , Api.Contact.delete contact CompletedDeleteContact
+            )
+
+        CompletedDeleteContact _ ->
+            ( model, Api.Contact.list model.sortDirection CompletedLoadContacts )
 
 
 
@@ -130,13 +147,17 @@ subscriptions _ =
 
 view : Theme -> Model -> View Msg
 view theme model =
-    [ UI.Modal.init ClosedModal
-        |> UI.Modal.withHeader "Tem certeza que deseja remover o contato \"Mateus Silva\"?"
-        |> UI.Modal.withBody "Esta ação não poderá ser desfeita!"
-        |> UI.Modal.withAction "Deletar" ClosedModal
-        |> UI.Modal.withVariant UI.Danger
-        |> UI.Modal.withVisible model.showModal
-        |> UI.Modal.view theme
+    [ case model.deletingContact of
+        Just contact ->
+            UI.Modal.init ClosedModal
+                |> UI.Modal.withHeader "Tem certeza que deseja remover o contato \"Mateus Silva\"?"
+                |> UI.Modal.withBody "Esta ação não poderá ser desfeita!"
+                |> UI.Modal.withAction "Deletar" (ConfirmedDeleteContact contact)
+                |> UI.Modal.withVariant UI.Danger
+                |> UI.Modal.view theme
+
+        Nothing ->
+            text ""
     , searchBar theme "Pesquisar contato..."
     , header theme
     , hr
@@ -181,7 +202,15 @@ view theme model =
                     , Css.flexDirection Css.column
                     ]
                 ]
-                (List.indexedMap (Contact.view theme) contacts)
+                (List.indexedMap
+                    (\index contact ->
+                        Contact.view theme
+                            index
+                            ClickedDeleteContact
+                            contact
+                    )
+                    contacts
+                )
 
         WithError _ ->
             div

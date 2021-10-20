@@ -4,6 +4,7 @@ module Contact exposing
     , Output
     , decoder
     , form
+    , getId
     , optionalField
     , view
     , viewLoading
@@ -16,6 +17,7 @@ import Form
 import Gen.Route
 import Html.Styled exposing (a, button, div, img, li, small, span, strong, text)
 import Html.Styled.Attributes exposing (css, href, src)
+import Html.Styled.Events as Events
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP
 import Mask
@@ -33,12 +35,17 @@ type Model
         }
 
 
+getId : Model -> String
+getId (Contact model) =
+    model.id
+
+
 
 -- VIEW
 
 
-view : Theme -> Int -> Model -> ( String, Html.Styled.Html msg )
-view theme index (Contact model) =
+view : Theme -> Int -> (Model -> msg) -> Model -> ( String, Html.Styled.Html msg )
+view theme index deleteMsg (Contact model) =
     let
         contactItem : String -> Html.Styled.Html msg
         contactItem content =
@@ -136,7 +143,9 @@ view theme index (Contact model) =
                 ]
                 [ img [ src "/icons/edit.svg" ] [] ]
             , button
-                [ css [ actionIconStyle, Css.marginLeft (Css.rem 0.5) ] ]
+                [ Events.onClick (deleteMsg (Contact model))
+                , css [ actionIconStyle, Css.marginLeft (Css.rem 0.5) ]
+                ]
                 [ img [ src "/icons/delete.svg" ] [] ]
             ]
         ]

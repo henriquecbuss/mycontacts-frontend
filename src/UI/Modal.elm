@@ -13,6 +13,7 @@ import Css
 import Html.Styled exposing (button, div, h1, node, p, text)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events as Events
+import Json.Decode
 import Themes exposing (Theme)
 import UI
 
@@ -91,6 +92,7 @@ view theme (Modal modal) =
                 , Css.left Css.zero
                 , Css.right Css.zero
                 , Css.bottom Css.zero
+                , Css.zIndex (Css.int 10)
                 , Css.displayFlex
                 , Css.alignItems Css.center
                 , Css.justifyContent Css.center
@@ -98,8 +100,9 @@ view theme (Modal modal) =
                 , Css.property "backdrop-filter" "blur(7px)"
                 ]
             ]
-            [ node "click-catcher"
-                [ css
+            [ node "modal-container"
+                [ Events.on "esc" (Json.Decode.succeed modal.onClose)
+                , css
                     [ Css.maxWidth (Css.px 450)
                     , Css.width (Css.pct 100)
                     , Css.backgroundColor theme.colors.white
