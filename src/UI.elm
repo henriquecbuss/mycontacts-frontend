@@ -2,6 +2,7 @@ module UI exposing (ButtonVariant(..), button, pageHeader)
 
 import Css
 import Css.Transitions
+import Gen.Route
 import Html.Styled
 import Html.Styled.Attributes as Attributes
 import Html.Styled.Events as Events
@@ -84,16 +85,26 @@ pageHeader theme title =
             [ Css.marginBottom (Css.rem 1.5)
             ]
         ]
-        [ Html.Styled.div
-            [ Attributes.css
-                [ Css.displayFlex
-                , Css.alignItems Css.center
+        [ Html.Styled.a
+            [ Attributes.href (Gen.Route.toHref Gen.Route.Home_)
+            , Attributes.css
+                [ Css.textDecoration Css.none
+                , Css.hover [ Css.textDecoration Css.underline ]
+                , Css.focus [ Css.textDecoration Css.underline ]
+                , Css.pseudoClass "focus-visible"
+                    [ Css.outline3 theme.borderWidth Css.solid theme.colors.primary.main
+                    , Css.outlineOffset (Css.px 2)
+                    , Css.borderRadius theme.borderRadius
+                    ]
                 ]
             ]
             [ Html.Styled.img
                 [ Attributes.src "/icons/arrowUp.svg"
                 , Attributes.css
-                    [ Css.transform (Css.rotate (Css.deg -90))
+                    [ Css.transforms
+                        [ Css.rotate (Css.deg -90)
+                        , Css.translateX (Css.px -2)
+                        ]
                     ]
                 ]
                 []

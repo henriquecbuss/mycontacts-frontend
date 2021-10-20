@@ -110,7 +110,7 @@ view theme model =
             , Css.flexDirection Css.column
             ]
         ]
-        (List.map (Contact.view theme) model.contacts)
+        (List.indexedMap (Contact.view theme) model.contacts)
     ]
 
 

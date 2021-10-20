@@ -42,6 +42,7 @@ form theme { onSubmit, action, loading, state, fields } =
             , Css.property "gap" "16px"
             ]
         , optionalAttribute Events.onSubmit onSubmit
+        , Attributes.novalidate True
         ]
         (List.concat
             [ fields

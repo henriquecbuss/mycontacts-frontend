@@ -2,10 +2,12 @@ module Contact exposing (Input, Model, Output, form, mockContacts, view)
 
 import Category exposing (Category(..))
 import Css
+import Css.Animations
 import Form
 import Html.Styled exposing (a, button, div, img, li, small, strong, text)
 import Html.Styled.Attributes exposing (css, src)
 import Mask
+import Regex exposing (Regex)
 import Themes exposing (Theme)
 
 
@@ -45,8 +47,8 @@ mockContacts =
     ]
 
 
-view : Theme -> Model -> Html.Styled.Html msg
-view theme (Contact model) =
+view : Theme -> Int -> Model -> Html.Styled.Html msg
+view theme index (Contact model) =
     let
         contactItem : String -> Html.Styled.Html msg
         contactItem content =
@@ -84,6 +86,23 @@ view theme (Contact model) =
             , Css.boxShadow4 Css.zero (Css.px 4) (Css.px 10) (Css.rgba 0 0 0 0.04)
             , Css.marginTop (Css.rem 1)
             , Css.firstChild [ Css.marginTop Css.zero ]
+            , Css.animationDuration (Css.ms 500)
+            , Css.animationDelay (Css.ms (100 * toFloat index))
+            , Css.property "animation-fill-mode" "both"
+            , Css.animationName
+                (Css.Animations.keyframes
+                    [ ( 0
+                      , [ Css.Animations.opacity Css.zero
+                        , Css.Animations.transform [ Css.translateY (Css.pct 50) ]
+                        ]
+                      )
+                    , ( 100
+                      , [ Css.Animations.opacity (Css.num 1)
+                        , Css.Animations.transform [ Css.translateY Css.zero ]
+                        ]
+                      )
+                    ]
+                )
             ]
         ]
         [ div
@@ -149,6 +168,17 @@ type alias Output =
     }
 
 
+emailRegex : Regex
+emailRegex =
+    Regex.fromString "^(([^<>()[\\]\\\\.,;:\\s@\"]+(\\.[^<>()[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$"
+        |> Maybe.withDefault Regex.never
+
+
+phoneMask : { mask : String, replace : Char }
+phoneMask =
+    { mask = "(##) # ####-####", replace = '#' }
+
+
 form : Form.Form Input Output
 form =
     Form.succeed Output
@@ -166,8 +196,14 @@ form =
             )
         |> Form.append
             (Form.optional
-                (Form.textField
-                    { parser = Ok
+                (Form.emailField
+                    { parser =
+                        \email ->
+                            if Regex.contains emailRegex email then
+                                Ok email
+
+                            else
+                                Err "O formato do e-mail é inválido"
                     , value = .email
                     , update = \email values -> { values | email = email }
                     , error = always Nothing
@@ -181,8 +217,8 @@ form =
         |> Form.append
             (Form.optional
                 (Form.textField
-                    { parser = Ok
-                    , value = .phone
+                    { parser = Mask.remove phoneMask >> Ok
+                    , value = .phone >> Mask.string phoneMask
                     , update = \phone values -> { values | phone = phone }
                     , error = always Nothing
                     , attributes =
