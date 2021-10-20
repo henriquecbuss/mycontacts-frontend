@@ -84,6 +84,8 @@ view theme model =
         , loading = "Cadastrando"
         , validation = Form.View.ValidateOnBlur
         }
-        (Form.map SubmittedForm Contact.form)
+        (Contact.form []
+            |> Form.map SubmittedForm
+        )
         model
     ]

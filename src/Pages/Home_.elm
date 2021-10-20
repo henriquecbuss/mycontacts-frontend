@@ -8,9 +8,9 @@ import Css.Global
 import Css.Transitions
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
-import Html.Styled exposing (a, button, div, h1, hr, img, input, strong, text)
-import Html.Styled.Attributes exposing (css, href, placeholder, src)
-import Html.Styled.Events exposing (onClick)
+import Html.Styled exposing (a, button, div, h1, h2, hr, img, input, strong, text)
+import Html.Styled.Attributes as Attributes exposing (css, href, placeholder, src)
+import Html.Styled.Events as Events exposing (onClick)
 import Html.Styled.Keyed
 import Page
 import Request
@@ -37,6 +37,7 @@ page shared _ =
 
 type alias Model =
     { sortDirection : Api.HttpClient.SortDirection
+    , search : String
     , contacts : ContactsStatus
     , deletingContact : Maybe Contact.Model
     }
@@ -55,6 +56,7 @@ init =
             Api.HttpClient.Asc
     in
     ( { sortDirection = defaultSortDirection
+      , search = ""
       , contacts = Loading
       , deletingContact = Nothing
       }
@@ -70,6 +72,7 @@ type Msg
     = ClickedToggleSortDirection
     | CompletedLoadContacts (Api.HttpClient.Response (List Contact.Model))
     | RequestedRetryContacts
+    | EnteredSearchTerm String
     | ClosedModal
     | ClickedDeleteContact Contact.Model
     | ConfirmedDeleteContact Contact.Model
@@ -114,6 +117,9 @@ update msg model =
             , Api.Contact.list model.sortDirection CompletedLoadContacts
             )
 
+        EnteredSearchTerm searchTerm ->
+            ( { model | search = searchTerm }, Cmd.none )
+
         ClosedModal ->
             ( { model | deletingContact = Nothing }, Cmd.none )
 
@@ -145,12 +151,35 @@ subscriptions _ =
 -- VIEW
 
 
+getContacts : Model -> ContactsStatus
+getContacts model =
+    case model.contacts of
+        Loading ->
+            Loading
+
+        WithError err ->
+            WithError err
+
+        Loaded contacts_ ->
+            contacts_
+                |> List.filter
+                    (Contact.getName
+                        >> String.toLower
+                        >> String.contains (String.toLower model.search)
+                    )
+                |> Loaded
+
+
 view : Theme -> Model -> View Msg
 view theme model =
     [ case model.deletingContact of
         Just contact ->
             UI.Modal.init ClosedModal
-                |> UI.Modal.withHeader "Tem certeza que deseja remover o contato \"Mateus Silva\"?"
+                |> UI.Modal.withHeader
+                    ("Tem certeza que deseja remover o contato \""
+                        ++ Contact.getName contact
+                        ++ "\"?"
+                    )
                 |> UI.Modal.withBody "Esta ação não poderá ser desfeita!"
                 |> UI.Modal.withAction "Deletar" (ConfirmedDeleteContact contact)
                 |> UI.Modal.withVariant UI.Danger
@@ -158,8 +187,8 @@ view theme model =
 
         Nothing ->
             text ""
-    , searchBar theme "Pesquisar contato..."
-    , header theme
+    , searchBar theme model.search "Pesquisar contato..."
+    , header theme (getContacts model)
     , hr
         [ css
             [ Css.margin2 (Css.rem 1) Css.zero
@@ -170,13 +199,20 @@ view theme model =
             ]
         ]
         []
-    , case model.contacts of
+    , case getContacts model of
         WithError _ ->
             text ""
 
-        _ ->
+        Loading ->
             ordenationButton theme model
-    , case model.contacts of
+
+        Loaded contacts ->
+            if List.isEmpty contacts then
+                text ""
+
+            else
+                ordenationButton theme model
+    , case getContacts model of
         Loading ->
             Html.Styled.Keyed.ul
                 [ css
@@ -195,22 +231,35 @@ view theme model =
                 )
 
         Loaded contacts ->
-            Html.Styled.Keyed.ul
-                [ css
-                    [ Css.listStyle Css.none
-                    , Css.displayFlex
-                    , Css.flexDirection Css.column
+            if List.isEmpty contacts then
+                h2
+                    [ css
+                        [ Css.fontWeight Css.normal
+                        , Css.textAlign Css.center
+                        , Css.color theme.colors.gray.light
+                        ]
                     ]
-                ]
-                (List.indexedMap
-                    (\index contact ->
-                        Contact.view theme
-                            index
-                            ClickedDeleteContact
-                            contact
+                    [ text "Nenhum resultado encontrado para "
+                    , strong [] [ text ("\"" ++ model.search ++ "\"") ]
+                    ]
+
+            else
+                Html.Styled.Keyed.ul
+                    [ css
+                        [ Css.listStyle Css.none
+                        , Css.displayFlex
+                        , Css.flexDirection Css.column
+                        ]
+                    ]
+                    (contacts
+                        |> List.indexedMap
+                            (\index contact ->
+                                Contact.view theme
+                                    index
+                                    ClickedDeleteContact
+                                    contact
+                            )
                     )
-                    contacts
-                )
 
         WithError _ ->
             div
@@ -248,10 +297,13 @@ view theme model =
     ]
 
 
-searchBar : Theme -> String -> Html.Styled.Html msg
-searchBar theme placeholderString =
+searchBar : Theme -> String -> String -> Html.Styled.Html Msg
+searchBar theme value placeholderString =
     input
-        [ css
+        [ Attributes.value value
+        , Events.onInput EnteredSearchTerm
+        , placeholder placeholderString
+        , css
             [ Css.width (Css.pct 100)
             , Css.padding (Css.rem 1)
             , Css.borderRadius (Css.px 25)
@@ -265,13 +317,12 @@ searchBar theme placeholderString =
                 [ Css.color theme.colors.gray.light
                 ]
             ]
-        , placeholder placeholderString
         ]
         []
 
 
-header : Theme -> Html.Styled.Html msg
-header theme =
+header : Theme -> ContactsStatus -> Html.Styled.Html msg
+header theme contactsStatus =
     div
         [ css
             [ Css.displayFlex
@@ -282,7 +333,20 @@ header theme =
             ]
         ]
         [ h1 [ css [ Css.fontSize (Css.rem 1.5) ] ]
-            [ text "3 contatos" ]
+            [ case contactsStatus of
+                Loading ->
+                    text ""
+
+                Loaded contacts ->
+                    if List.length contacts == 1 then
+                        text "1 contato"
+
+                    else
+                        text (String.fromInt (List.length contacts) ++ " contatos")
+
+                WithError _ ->
+                    text ""
+            ]
         , a
             [ css
                 [ Css.backgroundColor theme.colors.background

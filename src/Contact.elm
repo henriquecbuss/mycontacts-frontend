@@ -3,9 +3,10 @@ module Contact exposing
     , Model
     , Output
     , decoder
+    , encodeOutput
     , form
     , getId
-    , optionalField
+    , getName
     , view
     , viewLoading
     )
@@ -20,9 +21,11 @@ import Html.Styled.Attributes exposing (css, href, src)
 import Html.Styled.Events as Events
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP
+import Json.Encode as Encode
 import Mask
 import Regex exposing (Regex)
 import Themes exposing (Theme)
+import Utils.Json
 
 
 type Model
@@ -38,6 +41,11 @@ type Model
 getId : Model -> String
 getId (Contact model) =
     model.id
+
+
+getName : Model -> String
+getName (Contact model) =
+    model.name
 
 
 
@@ -251,7 +259,7 @@ type alias Output =
     { name : String
     , email : Maybe String
     , phone : Maybe String
-    , category : Maybe Category
+    , categoryId : Maybe String
     }
 
 
@@ -266,8 +274,8 @@ phoneMask =
     { mask = "(##) # ####-####", replace = '#' }
 
 
-form : Form.Form Input Output
-form =
+form : List Category -> Form.Form Input Output
+form categories =
     Form.succeed Output
         |> Form.append
             (Form.textField
@@ -317,19 +325,11 @@ form =
             )
         |> Form.append
             (Form.optional
-                (Form.selectField
-                    { parser = Category.fromString >> Result.fromMaybe "Invalid category"
-                    , value = .category
-                    , update = \category values -> { values | category = category }
-                    , error = always Nothing
-                    , attributes =
-                        { label = "Categoria"
-                        , placeholder = "Categoria"
-                        , options =
-                            Category.list
-                                |> List.map (\category -> ( Category.toString category, Category.toString category ))
+                (Category.form categories
+                    |> Form.mapValues
+                        { value = .category
+                        , update = \category values -> { values | category = category }
                         }
-                    }
                 )
             )
 
@@ -352,11 +352,16 @@ decoder =
         )
         |> JDP.required "id" Decode.string
         |> JDP.required "name" Decode.string
-        |> optionalField "email" Decode.string
-        |> optionalField "phone" Decode.string
-        |> optionalField "category_name" Category.decoder
+        |> Utils.Json.optionalField "email" Decode.string
+        |> Utils.Json.optionalField "phone" Decode.string
+        |> Utils.Json.optionalField "category" Category.decoder
 
 
-optionalField : String -> Decoder a -> Decoder (Maybe a -> b) -> Decoder b
-optionalField fieldName decoder_ =
-    JDP.optional fieldName (Decode.map Just decoder_) Nothing
+encodeOutput : Output -> Encode.Value
+encodeOutput output =
+    Encode.object
+        [ ( "name", Encode.string output.name )
+        , ( "email", Utils.Json.maybeEncode Encode.string output.email )
+        , ( "phone", Utils.Json.maybeEncode Encode.string output.phone )
+        , ( "category_id", Utils.Json.maybeEncode Encode.string output.categoryId )
+        ]

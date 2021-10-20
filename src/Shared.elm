@@ -1,5 +1,6 @@
 module Shared exposing
-    ( Flags
+    ( CategoryStatus(..)
+    , Flags
     , Model
     , Msg
     , init
@@ -7,6 +8,9 @@ module Shared exposing
     , update
     )
 
+import Api.Category
+import Api.HttpClient
+import Category exposing (Category)
 import Json.Decode as Json
 import Request exposing (Request)
 import Themes exposing (Theme)
@@ -17,23 +21,38 @@ type alias Flags =
 
 
 type alias Model =
-    { theme : Theme }
+    { theme : Theme
+    , availableCategories : CategoryStatus
+    }
+
+
+type CategoryStatus
+    = Loading
+    | Loaded (List Category)
+    | WithError Api.HttpClient.Error
 
 
 type Msg
-    = NoOp
+    = CompletedLoadCategories (Api.HttpClient.Response (List Category))
 
 
 init : Request -> Flags -> ( Model, Cmd Msg )
 init _ _ =
-    ( { theme = Themes.default }, Cmd.none )
+    ( { theme = Themes.default
+      , availableCategories = Loading
+      }
+    , Api.Category.list CompletedLoadCategories
+    )
 
 
 update : Request -> Msg -> Model -> ( Model, Cmd Msg )
 update _ msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
+        CompletedLoadCategories (Ok categories) ->
+            ( { model | availableCategories = Loaded categories }, Cmd.none )
+
+        CompletedLoadCategories (Err err) ->
+            ( { model | availableCategories = WithError err }, Cmd.none )
 
 
 subscriptions : Request -> Model -> Sub Msg

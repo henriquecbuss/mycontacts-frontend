@@ -1,62 +1,100 @@
 module Api.HttpClient exposing
-    ( BackendDeleteEndpoint(..)
-    , BackendGetEndpoint(..)
-    , DeleteUrl(..)
-    , Error(..)
-    , GetUrl(..)
-    , Response
+    ( Error(..), Response
+    , get, GetRequest(..), BackendGetEndpoint(..)
+    , post, PostRequest(..), BackendPostEndpoint(..)
+    , delete, DeleteRequest(..), BackendDeleteEndpoint(..)
     , SortDirection(..)
-    , delete
-    , get
-    , unwrapResult
     )
+
+{-| This module is used to organize all our HTTP calls.
+
+
+## Response
+
+@docs Error, Response, unwrapResult
+
+
+## Get
+
+@docs get, GetRequest, BackendGetEndpoint
+
+
+## Post
+
+@docs post, PostRequest, BackendPostEndpoint
+
+
+## Delete
+
+@docs delete, DeleteRequest, BackendDeleteEndpoint
+
+
+## Helpers
+
+@docs SortDirection
+
+-}
 
 import Contact
 import Http
-import Json.Decode exposing (Decoder)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode
 import Url.Builder
+
+
+
+-- RESPONSE
+
+
+type alias Response a =
+    Result Error a
+
+
+type Error
+    = HttpError Http.Error
+    | ResponseError String
 
 
 
 -- GET
 
 
-type GetUrl
-    = BackendGetUrl BackendGetEndpoint
+type GetRequest
+    = BackendGetRequest BackendGetEndpoint
 
 
 type BackendGetEndpoint
     = ListContacts SortDirection
+    | ListCategories
 
 
-type SortDirection
-    = Asc
-    | Desc
-
-
-get : GetUrl -> (Response a -> msg) -> Decoder a -> Cmd msg
+get : GetRequest -> (Response a -> msg) -> Decoder a -> Cmd msg
 get getUrl toMsg decoder =
     Http.get
         { url = getUrlToString getUrl
-        , expect =
-            Http.expectJson
-                (\result ->
-                    case result of
-                        Err httpError ->
-                            Err (HttpError httpError)
+        , expect = expectJsonWithError decoder
+        }
+        |> Cmd.map toMsg
 
-                        Ok (Err responseError) ->
-                            Err (ResponseError responseError)
 
-                        Ok (Ok value) ->
-                            Ok value
-                )
-                (Json.Decode.oneOf
-                    [ Json.Decode.field "error" Json.Decode.string
-                        |> Json.Decode.map Err
-                    , Json.Decode.map Ok decoder
-                    ]
-                )
+
+-- POST
+
+
+type PostRequest
+    = BackendPostRequest BackendPostEndpoint
+
+
+type BackendPostEndpoint
+    = CreateContact
+
+
+post : PostRequest -> Encode.Value -> (Response a -> msg) -> Decoder a -> Cmd msg
+post postRequest body toMsg decoder =
+    Http.post
+        { url = postUrlToString postRequest
+        , body = Http.jsonBody body
+        , expect = expectJsonWithError decoder
         }
         |> Cmd.map toMsg
 
@@ -65,15 +103,15 @@ get getUrl toMsg decoder =
 -- DELETE
 
 
-type DeleteUrl
-    = BackendDeleteUrl BackendDeleteEndpoint
+type DeleteRequest
+    = BackendDeleteRequest BackendDeleteEndpoint
 
 
 type BackendDeleteEndpoint
     = DeleteContact Contact.Model
 
 
-delete : DeleteUrl -> (Response () -> msg) -> Cmd msg
+delete : DeleteRequest -> (Response () -> msg) -> Cmd msg
 delete deleteUrl toMsg =
     Http.request
         { method = "DELETE"
@@ -87,47 +125,77 @@ delete deleteUrl toMsg =
 
 
 
--- UTILS
+-- HELPERS
 
 
-getUrlToString : GetUrl -> String
+type SortDirection
+    = Asc
+    | Desc
+
+
+
+-- INTERNAL HELPERS
+
+
+expectJsonWithError : Decoder a -> Http.Expect (Response a)
+expectJsonWithError decoder =
+    Http.expectJson
+        (\result ->
+            case result of
+                Err httpError ->
+                    Err (HttpError httpError)
+
+                Ok (Err responseError) ->
+                    Err (ResponseError responseError)
+
+                Ok (Ok value) ->
+                    Ok value
+        )
+        (Decode.oneOf
+            [ Decode.field "error" Decode.string
+                |> Decode.map Err
+            , Decode.map Ok decoder
+            ]
+        )
+
+
+getUrlToString : GetRequest -> String
 getUrlToString getUrl =
     case getUrl of
-        BackendGetUrl (ListContacts sortDirection) ->
+        BackendGetRequest (ListContacts sortDirection) ->
             Url.Builder.crossOrigin backendUrl
                 [ "contacts" ]
                 [ Url.Builder.string "order" (sortDirectionToString sortDirection) ]
 
-
-deleteUrlToString : DeleteUrl -> String
-deleteUrlToString deleteUrl =
-    case deleteUrl of
-        BackendDeleteUrl (DeleteContact contact) ->
+        BackendGetRequest ListCategories ->
             Url.Builder.crossOrigin backendUrl
-                [ "contacts", Contact.getId contact ]
+                [ "categories" ]
                 []
 
 
-type alias Response a =
-    Result Error a
+postUrlToString : PostRequest -> String
+postUrlToString postUrl =
+    case postUrl of
+        BackendPostRequest CreateContact ->
+            Url.Builder.crossOrigin backendUrl
+                [ "contacts" ]
+                []
 
 
-type Error
-    = HttpError Http.Error
-    | ResponseError String
+postRequestBody : PostRequest -> Http.Body
+postRequestBody postRequest =
+    case postRequest of
+        BackendPostRequest CreateContact ->
+            Http.emptyBody
 
 
-unwrapResult : Result Http.Error (Result String a) -> Result Error a
-unwrapResult result =
-    case result of
-        Err httpError ->
-            Err (HttpError httpError)
-
-        Ok (Err responseError) ->
-            Err (ResponseError responseError)
-
-        Ok (Ok value) ->
-            Ok value
+deleteUrlToString : DeleteRequest -> String
+deleteUrlToString deleteUrl =
+    case deleteUrl of
+        BackendDeleteRequest (DeleteContact contact) ->
+            Url.Builder.crossOrigin backendUrl
+                [ "contacts", Contact.getId contact ]
+                []
 
 
 backendUrl : String
