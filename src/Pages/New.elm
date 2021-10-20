@@ -11,7 +11,6 @@ import Html.Styled exposing (text)
 import Page
 import Request
 import Shared
-import Themes exposing (Theme)
 import UI
 import UI.Form
 import View exposing (View)
@@ -66,7 +65,7 @@ update req msg model =
         SubmittedForm contactOutput ->
             ( model, Api.Contact.create contactOutput CompletedCreatingContact )
 
-        CompletedCreatingContact contact ->
+        CompletedCreatingContact _ ->
             ( model, Request.pushRoute Gen.Route.Home_ req )
 
 

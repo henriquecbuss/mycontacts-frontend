@@ -210,7 +210,7 @@ textareaField _ =
 
 
 numberField : Form.View.NumberFieldConfig msg -> Html.Styled.Html msg
-numberField { onChange, onBlur, disabled, value, error, showError, attributes } =
+numberField { onChange, disabled, value, attributes } =
     let
         stepAttr =
             attributes.step

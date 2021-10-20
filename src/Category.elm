@@ -7,7 +7,6 @@ import Html.Styled.Attributes exposing (css)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP
 import Themes exposing (Theme)
-import Utils.Json
 
 
 type Category
