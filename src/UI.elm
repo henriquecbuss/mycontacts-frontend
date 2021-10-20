@@ -1,4 +1,4 @@
-module UI exposing (ButtonVariant(..), button, pageHeader)
+module UI exposing (Variant(..), button, pageHeader)
 
 import Css
 import Css.Transitions
@@ -9,14 +9,14 @@ import Html.Styled.Events as Events
 import Themes exposing (Theme)
 
 
-type ButtonVariant
+type Variant
     = Primary
     | Danger
 
 
 button :
     Theme
-    -> ButtonVariant
+    -> Variant
     -> { onClick : Maybe msg, disabled : Bool }
     -> List Css.Style
     -> List (Html.Styled.Html msg)

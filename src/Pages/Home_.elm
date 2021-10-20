@@ -17,6 +17,7 @@ import Request
 import Shared
 import Themes exposing (Theme)
 import UI
+import UI.Modal
 import View exposing (View)
 
 
@@ -37,6 +38,7 @@ page shared _ =
 type alias Model =
     { sortDirection : Api.HttpClient.SortDirection
     , contacts : ContactsStatus
+    , showModal : Bool
     }
 
 
@@ -54,6 +56,7 @@ init =
     in
     ( { sortDirection = defaultSortDirection
       , contacts = Loading
+      , showModal = True
       }
     , Api.Contact.list defaultSortDirection CompletedLoadContacts
     )
@@ -67,6 +70,7 @@ type Msg
     = ClickedToggleSortDirection
     | CompletedLoadContacts (Api.HttpClient.Response (List Contact.Model))
     | RequestedRetryContacts
+    | ClosedModal
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -107,6 +111,9 @@ update msg model =
             , Api.Contact.list model.sortDirection CompletedLoadContacts
             )
 
+        ClosedModal ->
+            ( { model | showModal = False }, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -123,7 +130,14 @@ subscriptions _ =
 
 view : Theme -> Model -> View Msg
 view theme model =
-    [ searchBar theme "Pesquisar contato..."
+    [ UI.Modal.init ClosedModal
+        |> UI.Modal.withHeader "Tem certeza que deseja remover o contato \"Mateus Silva\"?"
+        |> UI.Modal.withBody "Esta ação não poderá ser desfeita!"
+        |> UI.Modal.withAction "Deletar" ClosedModal
+        |> UI.Modal.withVariant UI.Danger
+        |> UI.Modal.withVisible model.showModal
+        |> UI.Modal.view theme
+    , searchBar theme "Pesquisar contato..."
     , header theme
     , hr
         [ css
