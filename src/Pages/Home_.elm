@@ -8,7 +8,7 @@ import Css.Global
 import Css.Transitions
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
-import Html.Styled exposing (a, button, div, h1, hr, img, input, strong, text, ul)
+import Html.Styled exposing (a, button, div, h1, hr, img, input, strong, text)
 import Html.Styled.Attributes exposing (css, href, placeholder, src)
 import Html.Styled.Events exposing (onClick)
 import Html.Styled.Keyed
@@ -160,14 +160,7 @@ view theme model =
                     , Css.flexDirection Css.column
                     ]
                 ]
-                (List.indexedMap
-                    (\index contact ->
-                        ( Contact.getId contact
-                        , Contact.view theme index contact
-                        )
-                    )
-                    contacts
-                )
+                (List.indexedMap (Contact.view theme) contacts)
 
         WithError _ ->
             text ""

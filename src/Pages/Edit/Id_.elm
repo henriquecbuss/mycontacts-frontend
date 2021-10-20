@@ -1,18 +1,24 @@
 module Pages.Edit.Id_ exposing (Model, Msg, page)
 
+import Contact
+import Form
+import Form.View
 import Gen.Params.Edit.Id_ exposing (Params)
 import Page
 import Request
 import Shared
+import Themes exposing (Theme)
+import UI
+import UI.Form
 import View exposing (View)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
-page shared req =
+page shared _ =
     Page.element
         { init = init
         , update = update
-        , view = view
+        , view = view shared.theme
         , subscriptions = subscriptions
         }
 
@@ -22,12 +28,19 @@ page shared req =
 
 
 type alias Model =
-    {}
+    Form.View.Model Contact.Input
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( Form.View.idle
+        { name = ""
+        , email = ""
+        , phone = ""
+        , category = ""
+        }
+    , Cmd.none
+    )
 
 
 
@@ -35,13 +48,17 @@ init =
 
 
 type Msg
-    = ReplaceMe
+    = FormChanged (Form.View.Model Contact.Input)
+    | SubmittedForm Contact.Output
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ReplaceMe ->
+        FormChanged newForm ->
+            ( newForm, Cmd.none )
+
+        SubmittedForm _ ->
             ( model, Cmd.none )
 
 
@@ -50,7 +67,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -58,6 +75,15 @@ subscriptions model =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    View.placeholder "Edit.Id_"
+view : Theme -> Model -> View Msg
+view theme model =
+    [ UI.pageHeader theme "Editar Mateus Silva"
+    , Form.View.custom (UI.Form.viewConfig theme)
+        { onChange = FormChanged
+        , action = "Cadastrar"
+        , loading = "Cadastrando"
+        , validation = Form.View.ValidateOnBlur
+        }
+        (Form.map SubmittedForm Contact.form)
+        model
+    ]

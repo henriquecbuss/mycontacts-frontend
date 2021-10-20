@@ -4,7 +4,6 @@ module Contact exposing
     , Output
     , decoder
     , form
-    , getId
     , optionalField
     , view
     , viewLoading
@@ -14,8 +13,9 @@ import Category exposing (Category(..))
 import Css
 import Css.Animations
 import Form
+import Gen.Route
 import Html.Styled exposing (a, button, div, img, li, small, span, strong, text)
-import Html.Styled.Attributes exposing (css, src)
+import Html.Styled.Attributes exposing (css, href, src)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP
 import Mask
@@ -33,16 +33,11 @@ type Model
         }
 
 
-getId : Model -> String
-getId (Contact { id }) =
-    id
-
-
 
 -- VIEW
 
 
-view : Theme -> Int -> Model -> Html.Styled.Html msg
+view : Theme -> Int -> Model -> ( String, Html.Styled.Html msg )
 view theme index (Contact model) =
     let
         contactItem : String -> Html.Styled.Html msg
@@ -70,7 +65,8 @@ view theme index (Contact model) =
                     ]
                 ]
     in
-    li
+    ( model.id
+    , li
         [ css
             [ Css.displayFlex
             , Css.justifyContent Css.spaceBetween
@@ -134,13 +130,17 @@ view theme index (Contact model) =
                 |> Maybe.withDefault (text "")
             ]
         , div []
-            [ a [ css [ actionIconStyle ] ]
+            [ a
+                [ href (Gen.Route.toHref (Gen.Route.Edit__Id_ { id = model.id }))
+                , css [ actionIconStyle ]
+                ]
                 [ img [ src "/icons/edit.svg" ] [] ]
             , button
                 [ css [ actionIconStyle, Css.marginLeft (Css.rem 0.5) ] ]
                 [ img [ src "/icons/delete.svg" ] [] ]
             ]
         ]
+    )
 
 
 viewLoading : Theme -> Int -> Html.Styled.Html msg
