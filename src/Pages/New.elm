@@ -8,6 +8,7 @@ import Page
 import Request
 import Shared
 import Themes exposing (Theme)
+import UI
 import UI.Form
 import View exposing (View)
 
@@ -76,7 +77,8 @@ subscriptions _ =
 
 view : Theme -> Model -> View Msg
 view theme model =
-    [ Form.View.custom (UI.Form.viewConfig theme)
+    [ UI.pageHeader theme "Novo contato"
+    , Form.View.custom (UI.Form.viewConfig theme)
         { onChange = FormChanged
         , action = "Cadastrar"
         , loading = "Cadastrando"

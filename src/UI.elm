@@ -1,4 +1,4 @@
-module UI exposing (button)
+module UI exposing (button, pageHeader)
 
 import Css
 import Html.Styled
@@ -30,6 +30,44 @@ button theme { onClick, disabled } styles children =
             )
         ]
         children
+
+
+pageHeader : Theme -> String -> Html.Styled.Html msg
+pageHeader theme title =
+    Html.Styled.header
+        [ Attributes.css
+            [ Css.marginBottom (Css.rem 1.5)
+            ]
+        ]
+        [ Html.Styled.div
+            [ Attributes.css
+                [ Css.displayFlex
+                , Css.alignItems Css.center
+                ]
+            ]
+            [ Html.Styled.img
+                [ Attributes.src "/icons/arrowUp.svg"
+                , Attributes.css
+                    [ Css.transform (Css.rotate (Css.deg -90))
+                    ]
+                ]
+                []
+            , Html.Styled.span
+                [ Attributes.css
+                    [ Css.fontWeight Css.bold
+                    , Css.color theme.colors.primary.main
+                    , Css.marginLeft (Css.rem 0.5)
+                    ]
+                ]
+                [ Html.Styled.text "Voltar" ]
+            ]
+        , Html.Styled.h1
+            [ Attributes.css
+                [ Css.fontSize (Css.rem 1.5)
+                ]
+            ]
+            [ Html.Styled.text title ]
+        ]
 
 
 
