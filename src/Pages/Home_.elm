@@ -1,5 +1,7 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+import Api.Contact
+import Api.HttpClient
 import Contact
 import Css
 import Css.Global
@@ -17,7 +19,7 @@ import View exposing (View)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
-page shared req =
+page shared _ =
     Page.element
         { init = init
         , update = update
@@ -31,22 +33,27 @@ page shared req =
 
 
 type alias Model =
-    { sortDirection : SortDirection
-    , contacts : List Contact.Model
+    { sortDirection : Api.HttpClient.SortDirection
+    , contacts : ContactsStatus
     }
 
 
-type SortDirection
-    = Asc
-    | Desc
+type ContactsStatus
+    = Loading
+    | Loaded (List Contact.Model)
+    | WithError Api.HttpClient.Error
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { sortDirection = Asc
-      , contacts = Contact.mockContacts
+    let
+        defaultSortDirection =
+            Api.HttpClient.Asc
+    in
+    ( { sortDirection = defaultSortDirection
+      , contacts = Loading
       }
-    , Cmd.none
+    , Api.Contact.list defaultSortDirection CompletedLoadContacts
     )
 
 
@@ -56,20 +63,38 @@ init =
 
 type Msg
     = ClickedToggleSortDirection
+    | CompletedLoadContacts (Api.HttpClient.Response (List Contact.Model))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ClickedToggleSortDirection ->
-            ( { model
-                | sortDirection =
+            let
+                newSortDirection =
                     case model.sortDirection of
-                        Asc ->
-                            Desc
+                        Api.HttpClient.Asc ->
+                            Api.HttpClient.Desc
 
-                        Desc ->
-                            Asc
+                        Api.HttpClient.Desc ->
+                            Api.HttpClient.Asc
+            in
+            ( { model
+                | sortDirection = newSortDirection
+                , contacts = Loading
+              }
+            , Api.Contact.list newSortDirection CompletedLoadContacts
+            )
+
+        CompletedLoadContacts response ->
+            ( { model
+                | contacts =
+                    case response of
+                        Ok contacts ->
+                            Loaded contacts
+
+                        Err err ->
+                            WithError err
               }
             , Cmd.none
             )
@@ -80,7 +105,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -102,15 +127,28 @@ view theme model =
             ]
         ]
         []
-    , ordenationButton theme model
-    , ul
-        [ css
-            [ Css.listStyle Css.none
-            , Css.displayFlex
-            , Css.flexDirection Css.column
-            ]
-        ]
-        (List.indexedMap (Contact.view theme) model.contacts)
+    , case model.contacts of
+        WithError _ ->
+            text ""
+
+        _ ->
+            ordenationButton theme model
+    , case model.contacts of
+        Loading ->
+            text ""
+
+        Loaded contacts ->
+            ul
+                [ css
+                    [ Css.listStyle Css.none
+                    , Css.displayFlex
+                    , Css.flexDirection Css.column
+                    ]
+                ]
+                (List.indexedMap (Contact.view theme) contacts)
+
+        WithError _ ->
+            text ""
     ]
 
 
@@ -207,10 +245,10 @@ ordenationButton theme model =
                 , Css.transform
                     (Css.rotateX
                         (case model.sortDirection of
-                            Asc ->
+                            Api.HttpClient.Asc ->
                                 Css.deg 180
 
-                            Desc ->
+                            Api.HttpClient.Desc ->
                                 Css.deg 0
                         )
                     )

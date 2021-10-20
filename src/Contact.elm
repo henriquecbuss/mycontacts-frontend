@@ -1,4 +1,4 @@
-module Contact exposing (Input, Model, Output, form, mockContacts, view)
+module Contact exposing (Input, Model, Output, decoder, form, mockContacts, optionalField, view)
 
 import Category exposing (Category(..))
 import Css
@@ -6,6 +6,8 @@ import Css.Animations
 import Form
 import Html.Styled exposing (a, button, div, img, li, small, strong, text)
 import Html.Styled.Attributes exposing (css, src)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as JDP
 import Mask
 import Regex exposing (Regex)
 import Themes exposing (Theme)
@@ -245,3 +247,37 @@ form =
                     }
                 )
             )
+
+
+
+-- JSON
+
+
+decoder : Decoder Model
+decoder =
+    let
+        _ =
+            Debug.log "INSIDE CONTACT DECODER" True
+    in
+    Decode.succeed
+        (\id name email phone category ->
+            Contact
+                { id = id
+                , name = name
+                , email = email
+                , phone = phone
+                , category = category
+                }
+        )
+        |> JDP.required "id" Decode.string
+        |> JDP.required "name" Decode.string
+        |> optionalField "email" Decode.string
+        |> optionalField "phone" Decode.string
+        |> Debug.log "INSIDE 2"
+        |> optionalField "category" Category.decoder
+        |> Debug.log "AFTER"
+
+
+optionalField : String -> Decoder a -> Decoder (Maybe a -> b) -> Decoder b
+optionalField fieldName decoder_ =
+    JDP.optional fieldName (Decode.map Just decoder_) Nothing

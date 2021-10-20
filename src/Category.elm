@@ -1,8 +1,9 @@
-module Category exposing (Category(..), fromString, list, toString, view)
+module Category exposing (Category(..), decoder, fromString, list, toString, view)
 
 import Css
 import Html.Styled exposing (small, text)
 import Html.Styled.Attributes exposing (css)
+import Json.Decode as Decode exposing (Decoder)
 import Themes exposing (Theme)
 
 
@@ -41,6 +42,31 @@ fromString category =
 
         _ ->
             Nothing
+
+
+decoder : Decoder Category
+decoder =
+    Decode.string
+        |> Debug.log "INSIDE CATEGORY"
+        |> Decode.andThen
+            (\stringCategory ->
+                let
+                    _ =
+                        Debug.log "STRING CATEGORY" stringCategory
+                in
+                case String.toLower stringCategory of
+                    "instagram" ->
+                        Decode.succeed Instagram
+
+                    "linkedin" ->
+                        Decode.succeed LinkedIn
+
+                    "github" ->
+                        Decode.succeed GitHub
+
+                    _ ->
+                        Decode.fail "Expecting valid category"
+            )
 
 
 list : List Category
