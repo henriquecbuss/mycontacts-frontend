@@ -3,16 +3,18 @@ module Pages.Edit.Id_ exposing (Model, Msg, page)
 import Api.Contact
 import Api.HttpClient
 import Contact
+import Css
 import Form
 import Form.View
 import Gen.Params.Edit.Id_ exposing (Params)
 import Gen.Route
-import Html.Styled exposing (text)
+import Html.Styled exposing (div)
+import Html.Styled.Attributes exposing (css)
 import Page
 import Request
 import Shared
-import Themes exposing (Theme)
 import UI
+import UI.Animations
 import UI.Form
 import View exposing (View)
 
@@ -70,7 +72,7 @@ update req msg model =
         CompletedLoadContact (Err err) ->
             ( WithError err, Cmd.none )
 
-        CompletedSaveContact (Ok contact) ->
+        CompletedSaveContact (Ok _) ->
             ( model, Request.pushRoute Gen.Route.Home_ req )
 
         CompletedSaveContact (Err err) ->
@@ -117,7 +119,40 @@ view shared model =
             ]
 
         Loading ->
-            []
+            [ UI.pageHeader shared.theme "Editar"
+            , List.range 1 4
+                |> List.map
+                    (\index ->
+                        div
+                            [ css
+                                [ Css.width (Css.pct 100)
+                                , Css.height (Css.px 53)
+                                , Css.backgroundColor shared.theme.colors.gray.lightest
+                                , Css.borderRadius shared.theme.borderRadius
+                                , UI.Animations.pulse index
+                                ]
+                            ]
+                            []
+                    )
+                |> div
+                    [ css
+                        [ Css.displayFlex
+                        , Css.flexDirection Css.column
+                        , Css.property "gap" "1rem"
+                        ]
+                    ]
+            , div
+                [ css
+                    [ Css.width (Css.pct 100)
+                    , Css.height (Css.px 53)
+                    , Css.backgroundColor shared.theme.colors.primary.lighter
+                    , Css.borderRadius shared.theme.borderRadius
+                    , Css.marginTop (Css.rem 1.5)
+                    , UI.Animations.pulse 5
+                    ]
+                ]
+                []
+            ]
 
         WithError _ ->
             []

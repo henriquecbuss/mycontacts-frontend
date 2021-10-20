@@ -27,6 +27,7 @@ import Json.Encode as Encode
 import Mask
 import Regex exposing (Regex)
 import Themes exposing (Theme)
+import UI.Animations
 import Utils.Json
 
 
@@ -164,14 +165,6 @@ view theme index deleteMsg (Contact model) =
 
 viewLoading : Theme -> Int -> Html.Styled.Html msg
 viewLoading theme index =
-    let
-        pulse =
-            Css.Animations.keyframes
-                [ ( 0, [ Css.Animations.opacity (Css.num 0.7) ] )
-                , ( 50, [ Css.Animations.opacity (Css.num 0.3) ] )
-                , ( 100, [ Css.Animations.opacity (Css.num 0.7) ] )
-                ]
-    in
     li
         [ css
             [ Css.displayFlex
@@ -208,10 +201,7 @@ viewLoading theme index =
                 , Css.flexDirection Css.column
                 , Css.width (Css.pct 100)
                 , Css.property "gap" "4px"
-                , Css.animationName pulse
-                , Css.animationDuration (Css.ms 2000)
-                , Css.animationDelay (Css.ms (100 * toFloat index))
-                , Css.animationIterationCount Css.infinite
+                , UI.Animations.pulse index
                 ]
             ]
             [ span
