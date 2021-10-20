@@ -5,6 +5,7 @@ module Contact exposing
     , decoder
     , encodeOutput
     , form
+    , formFromContact
     , getId
     , getName
     , view
@@ -15,6 +16,7 @@ import Category exposing (Category(..))
 import Css
 import Css.Animations
 import Form
+import Form.View
 import Gen.Route
 import Html.Styled exposing (a, button, div, img, li, small, span, strong, text)
 import Html.Styled.Attributes exposing (css, href, src)
@@ -272,6 +274,19 @@ emailRegex =
 phoneMask : { mask : String, replace : Char }
 phoneMask =
     { mask = "(##) # ####-####", replace = '#' }
+
+
+formFromContact : Model -> Form.View.Model Input
+formFromContact (Contact contact) =
+    Form.View.idle
+        { name = contact.name
+        , email = Maybe.withDefault "" contact.email
+        , phone = Maybe.withDefault "" contact.phone
+        , category =
+            contact.category
+                |> Maybe.map Category.getId
+                |> Maybe.withDefault ""
+        }
 
 
 form : List Category -> Form.Form Input Output

@@ -1,9 +1,13 @@
 module Pages.Edit.Id_ exposing (Model, Msg, page)
 
+import Api.Contact
+import Api.HttpClient
 import Contact
 import Form
 import Form.View
 import Gen.Params.Edit.Id_ exposing (Params)
+import Gen.Route
+import Html.Styled exposing (text)
 import Page
 import Request
 import Shared
@@ -14,11 +18,11 @@ import View exposing (View)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
-page shared _ =
+page shared req =
     Page.element
-        { init = init
-        , update = update
-        , view = view shared.theme
+        { init = init req.params.id
+        , update = update req
+        , view = view shared
         , subscriptions = subscriptions
         }
 
@@ -27,19 +31,16 @@ page shared _ =
 -- INIT
 
 
-type alias Model =
-    Form.View.Model Contact.Input
+type Model
+    = Loading
+    | Loaded Contact.Model (Form.View.Model Contact.Input)
+    | WithError Api.HttpClient.Error
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Form.View.idle
-        { name = ""
-        , email = ""
-        , phone = ""
-        , category = ""
-        }
-    , Cmd.none
+init : String -> ( Model, Cmd Msg )
+init contactId =
+    ( Loading
+    , Api.Contact.getById contactId CompletedLoadContact
     )
 
 
@@ -48,18 +49,32 @@ init =
 
 
 type Msg
-    = FormChanged (Form.View.Model Contact.Input)
-    | SubmittedForm Contact.Output
+    = FormChanged Contact.Model (Form.View.Model Contact.Input)
+    | SubmittedForm Contact.Model Contact.Output
+    | CompletedLoadContact (Api.HttpClient.Response Contact.Model)
+    | CompletedSaveContact (Api.HttpClient.Response Contact.Model)
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Request.With Params -> Msg -> Model -> ( Model, Cmd Msg )
+update req msg model =
     case msg of
-        FormChanged newForm ->
-            ( newForm, Cmd.none )
+        FormChanged contact newForm ->
+            ( Loaded contact newForm, Cmd.none )
 
-        SubmittedForm _ ->
-            ( model, Cmd.none )
+        SubmittedForm contact contactOutput ->
+            ( model, Api.Contact.update contact contactOutput CompletedSaveContact )
+
+        CompletedLoadContact (Ok contact) ->
+            ( Loaded contact (Contact.formFromContact contact), Cmd.none )
+
+        CompletedLoadContact (Err err) ->
+            ( WithError err, Cmd.none )
+
+        CompletedSaveContact (Ok contact) ->
+            ( model, Request.pushRoute Gen.Route.Home_ req )
+
+        CompletedSaveContact (Err err) ->
+            ( WithError err, Cmd.none )
 
 
 
@@ -75,17 +90,34 @@ subscriptions _ =
 -- VIEW
 
 
-view : Theme -> Model -> View Msg
-view theme model =
-    [ UI.pageHeader theme "Editar Mateus Silva"
-    , Form.View.custom (UI.Form.viewConfig theme)
-        { onChange = FormChanged
-        , action = "Cadastrar"
-        , loading = "Cadastrando"
-        , validation = Form.View.ValidateOnBlur
-        }
-        (Contact.form []
-            |> Form.map SubmittedForm
-        )
-        model
-    ]
+view : Shared.Model -> Model -> View Msg
+view shared model =
+    case model of
+        Loaded contact contactForm ->
+            let
+                categories =
+                    case shared.availableCategories of
+                        Shared.Loaded categories_ ->
+                            categories_
+
+                        _ ->
+                            []
+            in
+            [ UI.pageHeader shared.theme ("Editar " ++ Contact.getName contact)
+            , Form.View.custom (UI.Form.viewConfig shared.theme)
+                { onChange = FormChanged contact
+                , action = "Salvar"
+                , loading = "Salvando"
+                , validation = Form.View.ValidateOnBlur
+                }
+                (Contact.form categories
+                    |> Form.map (SubmittedForm contact)
+                )
+                contactForm
+            ]
+
+        Loading ->
+            []
+
+        WithError _ ->
+            []

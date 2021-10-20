@@ -1,4 +1,4 @@
-module Category exposing (Category, decoder, form, toString, view)
+module Category exposing (Category, decoder, form, getId, toString, view)
 
 import Css
 import Form
@@ -17,6 +17,11 @@ type Category
 toString : Category -> String
 toString (Category { name }) =
     name
+
+
+getId : Category -> String
+getId (Category { id }) =
+    id
 
 
 decoder : Decoder Category

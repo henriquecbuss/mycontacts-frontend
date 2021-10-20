@@ -2,6 +2,7 @@ module Api.HttpClient exposing
     ( Error(..), Response
     , get, GetRequest(..), BackendGetEndpoint(..)
     , post, PostRequest(..), BackendPostEndpoint(..)
+    , put, PutRequest(..), BackendPutEndpoint(..)
     , delete, DeleteRequest(..), BackendDeleteEndpoint(..)
     , SortDirection(..)
     )
@@ -22,6 +23,11 @@ module Api.HttpClient exposing
 ## Post
 
 @docs post, PostRequest, BackendPostEndpoint
+
+
+## Put
+
+@docs put, PutRequest, BackendPutEndpoint
 
 
 ## Delete
@@ -65,6 +71,7 @@ type GetRequest
 
 type BackendGetEndpoint
     = ListContacts SortDirection
+    | GetContactById String
     | ListCategories
 
 
@@ -95,6 +102,32 @@ post postRequest body toMsg decoder =
         { url = postUrlToString postRequest
         , body = Http.jsonBody body
         , expect = expectJsonWithError decoder
+        }
+        |> Cmd.map toMsg
+
+
+
+-- PUT
+
+
+type PutRequest
+    = BackendPutRequest BackendPutEndpoint
+
+
+type BackendPutEndpoint
+    = UpdateContact Contact.Model
+
+
+put : PutRequest -> Encode.Value -> (Response a -> msg) -> Decoder a -> Cmd msg
+put putRequest body toMsg decoder =
+    Http.request
+        { method = "PUT"
+        , headers = []
+        , url = putUrlToString putRequest
+        , body = Http.jsonBody body
+        , expect = expectJsonWithError decoder
+        , timeout = Nothing
+        , tracker = Nothing
         }
         |> Cmd.map toMsg
 
@@ -167,6 +200,11 @@ getUrlToString getUrl =
                 [ "contacts" ]
                 [ Url.Builder.string "order" (sortDirectionToString sortDirection) ]
 
+        BackendGetRequest (GetContactById id) ->
+            Url.Builder.crossOrigin backendUrl
+                [ "contacts", id ]
+                []
+
         BackendGetRequest ListCategories ->
             Url.Builder.crossOrigin backendUrl
                 [ "categories" ]
@@ -179,6 +217,15 @@ postUrlToString postUrl =
         BackendPostRequest CreateContact ->
             Url.Builder.crossOrigin backendUrl
                 [ "contacts" ]
+                []
+
+
+putUrlToString : PutRequest -> String
+putUrlToString putUrl =
+    case putUrl of
+        BackendPutRequest (UpdateContact contact) ->
+            Url.Builder.crossOrigin backendUrl
+                [ "contacts", Contact.getId contact ]
                 []
 
 

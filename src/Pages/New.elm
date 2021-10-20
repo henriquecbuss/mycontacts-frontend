@@ -64,10 +64,6 @@ update req msg model =
             ( newForm, Cmd.none )
 
         SubmittedForm contactOutput ->
-            let
-                _ =
-                    Debug.log "SUBMITTED FORM" contactOutput
-            in
             ( model, Api.Contact.create contactOutput CompletedCreatingContact )
 
         CompletedCreatingContact contact ->
