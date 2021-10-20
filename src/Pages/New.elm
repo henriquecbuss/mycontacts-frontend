@@ -1,18 +1,19 @@
 module Pages.New exposing (Model, Msg, page)
 
-import Category exposing (Category)
+import Contact
+import Form
+import Form.View
 import Gen.Params.New exposing (Params)
 import Page
 import Request
 import Shared
 import Themes exposing (Theme)
-import UI
-import UI.Select
+import UI.Form
 import View exposing (View)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
-page shared req =
+page shared _ =
     Page.element
         { init = init
         , update = update
@@ -26,16 +27,17 @@ page shared req =
 
 
 type alias Model =
-    { name : String
-    , category : Maybe Category
-    }
+    Form.View.Model Contact.Input
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { name = ""
-      , category = Nothing
-      }
+    ( Form.View.idle
+        { name = ""
+        , email = ""
+        , phone = ""
+        , category = ""
+        }
     , Cmd.none
     )
 
@@ -45,18 +47,18 @@ init =
 
 
 type Msg
-    = EnteredName String
-    | SelectedCategory (Maybe Category)
+    = FormChanged (Form.View.Model Contact.Input)
+    | SubmittedForm Contact.Output
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        EnteredName name ->
-            ( { model | name = name }, Cmd.none )
+        FormChanged newForm ->
+            ( newForm, Cmd.none )
 
-        SelectedCategory category ->
-            ( { model | category = category }, Cmd.none )
+        SubmittedForm _ ->
+            ( model, Cmd.none )
 
 
 
@@ -64,7 +66,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -74,25 +76,12 @@ subscriptions model =
 
 view : Theme -> Model -> View Msg
 view theme model =
-    [ UI.input
-        theme
-        { label = "Nome"
-        , id = "name-input"
-        , value = model.name
-        , onInput = EnteredName
-        , error = Nothing
+    [ Form.View.custom (UI.Form.viewConfig theme)
+        { onChange = FormChanged
+        , action = "Cadastrar"
+        , loading = "Cadastrando"
+        , validation = Form.View.ValidateOnBlur
         }
-    , UI.Select.init
-        { label = "Categoria"
-        , id = "category-selector"
-        , onInput = SelectedCategory
-        }
-        |> UI.Select.withValue model.category
-        |> UI.Select.withOptions categoryToOption Category.list
-        |> UI.Select.view theme
+        (Form.map SubmittedForm Contact.form)
+        model
     ]
-
-
-categoryToOption : Category -> UI.Select.Option Category
-categoryToOption category =
-    { value = category, label = Category.toString category }

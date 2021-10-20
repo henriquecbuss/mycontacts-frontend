@@ -1,7 +1,8 @@
-module Contact exposing (Model, mockContacts, view)
+module Contact exposing (Input, Model, Output, form, mockContacts, view)
 
 import Category exposing (Category(..))
 import Css
+import Form
 import Html.Styled exposing (a, button, div, img, li, small, strong, text)
 import Html.Styled.Attributes exposing (css, src)
 import Mask
@@ -126,3 +127,85 @@ view theme (Contact model) =
                 [ img [ src "/icons/delete.svg" ] [] ]
             ]
         ]
+
+
+
+-- FORM
+
+
+type alias Input =
+    { name : String
+    , email : String
+    , phone : String
+    , category : String
+    }
+
+
+type alias Output =
+    { name : String
+    , email : Maybe String
+    , phone : Maybe String
+    , category : Maybe Category
+    }
+
+
+form : Form.Form Input Output
+form =
+    Form.succeed Output
+        |> Form.append
+            (Form.textField
+                { parser = Ok
+                , value = .name
+                , update = \name values -> { values | name = name }
+                , error = always Nothing
+                , attributes =
+                    { placeholder = "Nome *"
+                    , label = "Nome *"
+                    }
+                }
+            )
+        |> Form.append
+            (Form.optional
+                (Form.textField
+                    { parser = Ok
+                    , value = .email
+                    , update = \email values -> { values | email = email }
+                    , error = always Nothing
+                    , attributes =
+                        { placeholder = "E-mail"
+                        , label = "E-mail"
+                        }
+                    }
+                )
+            )
+        |> Form.append
+            (Form.optional
+                (Form.textField
+                    { parser = Ok
+                    , value = .phone
+                    , update = \phone values -> { values | phone = phone }
+                    , error = always Nothing
+                    , attributes =
+                        { placeholder = "Telefone"
+                        , label = "Telefone"
+                        }
+                    }
+                )
+            )
+        |> Form.append
+            (Form.optional
+                (Form.selectField
+                    { parser = Category.fromString >> Result.fromMaybe "Invalid category"
+                    , value = .category
+                    , update = \category values -> { values | category = category }
+                    , error = always Nothing
+                    , attributes =
+                        { label = "Categoria"
+                        , placeholder = "Categoria"
+                        , options =
+                            Category.list
+                                |> List.map (\category -> ( Category.toString category, Category.toString category ))
+                        }
+                    }
+                )
+            )

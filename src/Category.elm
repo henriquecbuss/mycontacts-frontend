@@ -1,4 +1,4 @@
-module Category exposing (Category(..), list, toString, view)
+module Category exposing (Category(..), fromString, list, toString, view)
 
 import Css
 import Html.Styled exposing (small, text)
@@ -25,6 +25,22 @@ toString category =
 
         GitHub ->
             "GitHub"
+
+
+fromString : String -> Maybe Category
+fromString category =
+    case category of
+        "Instagram" ->
+            Just Instagram
+
+        "LinkedIn" ->
+            Just LinkedIn
+
+        "GitHub" ->
+            Just GitHub
+
+        _ ->
+            Nothing
 
 
 list : List Category
