@@ -182,13 +182,6 @@ postUrlToString postUrl =
                 []
 
 
-postRequestBody : PostRequest -> Http.Body
-postRequestBody postRequest =
-    case postRequest of
-        BackendPostRequest CreateContact ->
-            Http.emptyBody
-
-
 deleteUrlToString : DeleteRequest -> String
 deleteUrlToString deleteUrl =
     case deleteUrl of

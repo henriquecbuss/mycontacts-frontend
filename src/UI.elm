@@ -6,6 +6,7 @@ import Gen.Route
 import Html.Styled
 import Html.Styled.Attributes as Attributes
 import Html.Styled.Events as Events
+import Json.Decode
 import Themes exposing (Theme)
 
 
@@ -48,7 +49,8 @@ button theme variant { onClick, disabled } styles children =
                     theme.colors.danger.dark
     in
     Html.Styled.button
-        [ optionalAttribute Events.onClick onClick
+        [ optionalAttribute (Events.preventDefaultOn "click")
+            (Maybe.map (\handler -> Json.Decode.succeed ( handler, True )) onClick)
         , Attributes.disabled disabled
         , Attributes.css
             (Css.backgroundColor background
