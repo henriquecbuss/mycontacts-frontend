@@ -16,6 +16,7 @@ import Page
 import Request
 import Shared
 import Themes exposing (Theme)
+import UI
 import View exposing (View)
 
 
@@ -65,6 +66,7 @@ init =
 type Msg
     = ClickedToggleSortDirection
     | CompletedLoadContacts (Api.HttpClient.Response (List Contact.Model))
+    | RequestedRetryContacts
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -98,6 +100,11 @@ update msg model =
                             WithError err
               }
             , Cmd.none
+            )
+
+        RequestedRetryContacts ->
+            ( { model | contacts = Loading }
+            , Api.Contact.list model.sortDirection CompletedLoadContacts
             )
 
 
@@ -163,7 +170,38 @@ view theme model =
                 (List.indexedMap (Contact.view theme) contacts)
 
         WithError _ ->
-            text ""
+            div
+                [ css
+                    [ Css.displayFlex
+                    , Css.alignItems Css.center
+                    , Css.padding3 Css.zero (Css.rem 0.5) Css.zero
+                    ]
+                ]
+                [ img
+                    [ src "/icons/sadFace.svg"
+                    , css
+                        []
+                    ]
+                    []
+                , div
+                    [ css
+                        [ Css.marginLeft (Css.px 28)
+                        ]
+                    ]
+                    [ h1
+                        [ css
+                            [ Css.color theme.colors.danger.dark
+                            , Css.fontSize (Css.rem 1.5)
+                            ]
+                        ]
+                        [ text "Ocorreu um erro ao obter os seus contatos!" ]
+                    , UI.button theme
+                        UI.Primary
+                        { onClick = Just RequestedRetryContacts, disabled = False }
+                        [ Css.marginTop (Css.rem 0.5) ]
+                        [ text "Tentar obter novamente" ]
+                    ]
+                ]
     ]
 
 
