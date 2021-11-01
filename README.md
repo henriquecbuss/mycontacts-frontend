@@ -8,10 +8,18 @@ This is the frontend for [MyContacts - Backend](https://github.com/NeoVier/mycon
 The course teaches React on the frontend, and this is the Elm version of the same app.
 
 This project is mainly a sandbox to test some Elm packages, specifically
-[rtfeldman/elm-css](https://package.elm-lang.org/packages/rtfeldman/elm-css/latest/)
-and [hecrj/composable-form](https://package.elm-lang.org/packages/hecrj/composable-form/latest/).
+[elm-spa](https://www.elm-spa.dev/),
+[rtfeldman/elm-css](https://package.elm-lang.org/packages/rtfeldman/elm-css/latest/),
+[hecrj/composable-form](https://package.elm-lang.org/packages/hecrj/composable-form/latest/).
 
 The main take-aways from those packages are:
+
+## elm-spa
+
+- It's really nice to have a page created with a single command
+- It would be nice if we could have different types for route parameters (instead of just `String`s)
+- They have pretty sane defaults, and it's easy to customize some of them
+- Great docs and pretty good support on #elm-spa-users on Slack from what I've seen
 
 ## elm-css
 
