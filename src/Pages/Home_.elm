@@ -8,7 +8,7 @@ import Css.Global
 import Css.Transitions
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
-import Html.Styled exposing (a, button, div, h1, h2, hr, img, input, strong, text)
+import Html.Styled exposing (a, br, button, div, h1, h2, hr, img, input, p, span, strong, text)
 import Html.Styled.Attributes as Attributes exposing (css, href, placeholder, src)
 import Html.Styled.Events as Events exposing (onClick)
 import Html.Styled.Keyed
@@ -170,9 +170,19 @@ getContacts model =
                 |> Loaded
 
 
-view : Theme -> Model -> View Msg
-view theme model =
-    [ case model.deletingContact of
+hasNoContacts : Model -> Bool
+hasNoContacts model =
+    case model.contacts of
+        Loaded contacts ->
+            List.isEmpty contacts
+
+        _ ->
+            False
+
+
+viewDeleteContactModal : Theme -> Model -> Html.Styled.Html Msg
+viewDeleteContactModal theme model =
+    case model.deletingContact of
         Just contact ->
             UI.Modal.init ClosedModal
                 |> UI.Modal.withHeader
@@ -187,63 +197,74 @@ view theme model =
 
         Nothing ->
             text ""
-    , searchBar theme model.search "Pesquisar contato..."
-    , header theme (getContacts model)
-    , hr
-        [ css
-            [ Css.margin2 (Css.rem 1) Css.zero
-            , Css.height (Css.px 2)
-            , Css.borderRadius (Css.px 1)
-            , Css.color theme.colors.gray.light
-            , Css.opacity (Css.num 0.2)
+
+
+viewHeader : Theme -> Model -> List (Html.Styled.Html Msg)
+viewHeader theme model =
+    if hasNoContacts model then
+        [ div
+            [ css [ Css.displayFlex, Css.justifyContent Css.center ]
             ]
+            [ newContactButton theme ]
         ]
-        []
-    , case getContacts model of
-        WithError _ ->
-            text ""
 
-        Loading ->
-            ordenationButton theme model
+    else
+        [ searchBar theme model.search "Pesquisar contato..."
+        , header theme (getContacts model)
+        ]
 
-        Loaded contacts ->
-            if List.isEmpty contacts then
-                text ""
 
-            else
-                ordenationButton theme model
-    , case getContacts model of
-        Loading ->
-            Html.Styled.Keyed.ul
+viewBody : Theme -> Model -> List (Html.Styled.Html Msg)
+viewBody theme model =
+    if hasNoContacts model then
+        [ div
+            [ css
+                [ Css.paddingLeft (Css.px 50)
+                , Css.paddingRight (Css.px 50)
+                , Css.displayFlex
+                , Css.flexDirection Css.column
+                , Css.alignItems Css.center
+                ]
+            ]
+            [ img [ src "/icons/emptyBox.svg" ] []
+            , p
                 [ css
-                    [ Css.listStyle Css.none
-                    , Css.displayFlex
-                    , Css.flexDirection Css.column
+                    [ Css.color theme.colors.gray.light
+                    , Css.textAlign Css.center
+                    , Css.marginTop (Css.rem 1)
                     ]
                 ]
-                (List.range 1 5
-                    |> List.map
-                        (\index ->
-                            ( String.fromInt index
-                            , Contact.viewLoading theme index
-                            )
-                        )
-                )
-
-        Loaded contacts ->
-            if List.isEmpty contacts then
-                h2
+                [ text "Você ainda não tem nenhum contato cadastrado!"
+                , br [] []
+                , text "Clique no botão "
+                , span
                     [ css
-                        [ Css.fontWeight Css.normal
-                        , Css.textAlign Css.center
-                        , Css.color theme.colors.gray.light
+                        [ Css.color theme.colors.primary.main
+                        , Css.fontWeight Css.bold
                         ]
                     ]
-                    [ text "Nenhum resultado encontrado para "
-                    , strong [] [ text ("\"" ++ model.search ++ "\"") ]
-                    ]
+                    [ text "\"Novo contato\"" ]
+                , text " acima para cadastrar o seu primeiro contato!"
+                ]
+            ]
+        ]
 
-            else
+    else
+        [ case getContacts model of
+            WithError _ ->
+                text ""
+
+            Loading ->
+                ordenationButton theme model
+
+            Loaded contacts ->
+                if List.isEmpty contacts then
+                    text ""
+
+                else
+                    ordenationButton theme model
+        , case getContacts model of
+            Loading ->
                 Html.Styled.Keyed.ul
                     [ css
                         [ Css.listStyle Css.none
@@ -251,50 +272,109 @@ view theme model =
                         , Css.flexDirection Css.column
                         ]
                     ]
-                    (contacts
-                        |> List.indexedMap
-                            (\index contact ->
-                                Contact.view theme
-                                    index
-                                    ClickedDeleteContact
-                                    contact
+                    (List.range 1 5
+                        |> List.map
+                            (\index ->
+                                ( String.fromInt index
+                                , Contact.viewLoading theme index
+                                )
                             )
                     )
 
-        WithError _ ->
-            div
-                [ css
-                    [ Css.displayFlex
-                    , Css.alignItems Css.center
-                    , Css.padding3 Css.zero (Css.rem 0.5) Css.zero
-                    ]
-                ]
-                [ img
-                    [ src "/icons/sadFace.svg"
-                    , css
-                        []
-                    ]
-                    []
-                , div
-                    [ css
-                        [ Css.marginLeft (Css.px 28)
-                        ]
-                    ]
-                    [ h1
-                        [ css
-                            [ Css.color theme.colors.danger.dark
-                            , Css.fontSize (Css.rem 1.5)
+            Loaded contacts ->
+                if List.isEmpty contacts then
+                    div [ css [ Css.displayFlex, Css.alignItems Css.flexStart ] ]
+                        [ img
+                            [ src "/icons/magnifyingGlassQuestion.svg"
+                            , css [ Css.marginRight (Css.rem 1.5) ]
+                            ]
+                            []
+                        , p
+                            [ css
+                                [ Css.fontWeight Css.normal
+                                , Css.color theme.colors.gray.light
+                                ]
+                            ]
+                            [ text "Nenhum resultado encontrado para "
+                            , strong
+                                [ css [ Css.property "word-break" "break-word" ]
+                                ]
+                                [ text ("\"" ++ model.search ++ "\"") ]
                             ]
                         ]
-                        [ text "Ocorreu um erro ao obter os seus contatos!" ]
-                    , UI.button theme
-                        UI.Primary
-                        { onClick = Just RequestedRetryContacts, disabled = False }
-                        [ Css.marginTop (Css.rem 0.5) ]
-                        [ text "Tentar obter novamente" ]
+
+                else
+                    Html.Styled.Keyed.ul
+                        [ css
+                            [ Css.listStyle Css.none
+                            , Css.displayFlex
+                            , Css.flexDirection Css.column
+                            ]
+                        ]
+                        (contacts
+                            |> List.indexedMap
+                                (\index contact ->
+                                    Contact.view theme
+                                        index
+                                        ClickedDeleteContact
+                                        contact
+                                )
+                        )
+
+            WithError _ ->
+                div
+                    [ css
+                        [ Css.displayFlex
+                        , Css.alignItems Css.center
+                        , Css.padding3 Css.zero (Css.rem 0.5) Css.zero
+                        ]
+                    ]
+                    [ img
+                        [ src "/icons/sadFace.svg"
+                        , css
+                            []
+                        ]
+                        []
+                    , div
+                        [ css
+                            [ Css.marginLeft (Css.px 28)
+                            ]
+                        ]
+                        [ h1
+                            [ css
+                                [ Css.color theme.colors.danger.dark
+                                , Css.fontSize (Css.rem 1.5)
+                                ]
+                            ]
+                            [ text "Ocorreu um erro ao obter os seus contatos!" ]
+                        , UI.button theme
+                            UI.Primary
+                            { onClick = Just RequestedRetryContacts, disabled = False }
+                            [ Css.marginTop (Css.rem 0.5) ]
+                            [ text "Tentar obter novamente" ]
+                        ]
+                    ]
+        ]
+
+
+view : Theme -> Model -> View Msg
+view theme model =
+    List.concat
+        [ [ viewDeleteContactModal theme model ]
+        , viewHeader theme model
+        , [ hr
+                [ css
+                    [ Css.margin2 (Css.rem 1) Css.zero
+                    , Css.height (Css.px 2)
+                    , Css.borderRadius (Css.px 1)
+                    , Css.color theme.colors.gray.light
+                    , Css.opacity (Css.num 0.2)
                     ]
                 ]
-    ]
+                []
+          ]
+        , viewBody theme model
+        ]
 
 
 searchBar : Theme -> String -> String -> Html.Styled.Html Msg
@@ -347,32 +427,37 @@ header theme contactsStatus =
                 WithError _ ->
                     text ""
             ]
-        , a
-            [ css
-                [ Css.backgroundColor theme.colors.background
-                , Css.padding2 (Css.px 12) (Css.px 16)
-                , Css.fontWeight Css.bold
-                , Css.color theme.colors.primary.main
-                , Css.textDecoration Css.none
-                , Css.border3 theme.borderWidth Css.solid theme.colors.primary.main
-                , Css.borderRadius theme.borderRadius
-                , Css.cursor Css.pointer
-                , Css.Transitions.transition
-                    [ Css.Transitions.backgroundColor3 150 0 Css.Transitions.easeIn
-                    , Css.Transitions.color3 150 0 Css.Transitions.easeIn
-                    ]
-                , Css.hover
-                    [ Css.backgroundColor theme.colors.primary.main
-                    , Css.color theme.colors.background
-                    ]
-                , Css.active
-                    [ Css.backgroundColor theme.colors.primary.light
-                    ]
-                ]
-            , href (Gen.Route.toHref Gen.Route.New)
-            ]
-            [ text "Novo contato" ]
+        , newContactButton theme
         ]
+
+
+newContactButton : Theme -> Html.Styled.Html msg
+newContactButton theme =
+    a
+        [ css
+            [ Css.backgroundColor theme.colors.background
+            , Css.padding2 (Css.px 12) (Css.px 16)
+            , Css.fontWeight Css.bold
+            , Css.color theme.colors.primary.main
+            , Css.textDecoration Css.none
+            , Css.border3 theme.borderWidth Css.solid theme.colors.primary.main
+            , Css.borderRadius theme.borderRadius
+            , Css.cursor Css.pointer
+            , Css.Transitions.transition
+                [ Css.Transitions.backgroundColor3 150 0 Css.Transitions.easeIn
+                , Css.Transitions.color3 150 0 Css.Transitions.easeIn
+                ]
+            , Css.hover
+                [ Css.backgroundColor theme.colors.primary.main
+                , Css.color theme.colors.background
+                ]
+            , Css.active
+                [ Css.backgroundColor theme.colors.primary.light
+                ]
+            ]
+        , href (Gen.Route.toHref Gen.Route.New)
+        ]
+        [ text "Novo contato" ]
 
 
 ordenationButton : Theme -> Model -> Html.Styled.Html Msg
