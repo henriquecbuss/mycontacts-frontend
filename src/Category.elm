@@ -7,6 +7,7 @@ import Html.Styled.Attributes exposing (css)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP
 import Themes exposing (Theme)
+import WebData exposing (WebData)
 
 
 type Category
@@ -60,8 +61,6 @@ form categories =
         , attributes =
             { label = "Categoria"
             , placeholder = "Categoria"
-            , options =
-                categories
-                    |> List.map (\(Category { name, id }) -> ( id, name ))
+            , options = List.map (\(Category { name, id }) -> ( id, name )) categories
             }
         }

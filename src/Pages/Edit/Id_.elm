@@ -17,6 +17,7 @@ import UI
 import UI.Animations
 import UI.Form
 import View exposing (View)
+import WebData
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -99,7 +100,7 @@ view shared model =
             let
                 categories =
                     case shared.availableCategories of
-                        Shared.Loaded categories_ ->
+                        WebData.Loaded categories_ ->
                             categories_
 
                         _ ->
@@ -120,38 +121,7 @@ view shared model =
 
         Loading ->
             [ UI.pageHeader shared.theme "Editar"
-            , List.range 1 4
-                |> List.map
-                    (\index ->
-                        div
-                            [ css
-                                [ Css.width (Css.pct 100)
-                                , Css.height (Css.px 53)
-                                , Css.backgroundColor shared.theme.colors.gray.lightest
-                                , Css.borderRadius shared.theme.borderRadius
-                                , UI.Animations.pulse index
-                                ]
-                            ]
-                            []
-                    )
-                |> div
-                    [ css
-                        [ Css.displayFlex
-                        , Css.flexDirection Css.column
-                        , Css.property "gap" "1rem"
-                        ]
-                    ]
-            , div
-                [ css
-                    [ Css.width (Css.pct 100)
-                    , Css.height (Css.px 53)
-                    , Css.backgroundColor shared.theme.colors.primary.lighter
-                    , Css.borderRadius shared.theme.borderRadius
-                    , Css.marginTop (Css.rem 1.5)
-                    , UI.Animations.pulse 5
-                    ]
-                ]
-                []
+            , Contact.formSkeleton shared.theme
             ]
 
         WithError _ ->

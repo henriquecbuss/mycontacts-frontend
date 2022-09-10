@@ -6,6 +6,7 @@ module Contact exposing
     , encodeOutput
     , form
     , formFromContact
+    , formSkeleton
     , getId
     , getName
     , view
@@ -16,6 +17,7 @@ import Category exposing (Category(..))
 import Css
 import Css.Animations
 import Form
+import Form.Base
 import Form.View
 import Gen.Route
 import Html.Styled exposing (a, button, div, img, li, small, span, strong, text)
@@ -29,6 +31,7 @@ import Regex exposing (Regex)
 import Themes exposing (Theme)
 import UI.Animations
 import Utils.Json
+import WebData exposing (WebData)
 
 
 type Model
@@ -329,14 +332,51 @@ form categories =
                 )
             )
         |> Form.append
-            (Form.optional
-                (Category.form categories
-                    |> Form.mapValues
-                        { value = .category
-                        , update = \category values -> { values | category = category }
-                        }
-                )
+            (Category.form categories
+                |> Form.mapValues
+                    { value = .category
+                    , update = \category values -> { values | category = category }
+                    }
+                |> Form.optional
             )
+
+
+formSkeleton : Theme -> Html.Styled.Html msg
+formSkeleton theme =
+    div []
+        [ List.range 1 4
+            |> List.map
+                (\index ->
+                    div
+                        [ css
+                            [ Css.width (Css.pct 100)
+                            , Css.height (Css.px 53)
+                            , Css.backgroundColor theme.colors.gray.lightest
+                            , Css.borderRadius theme.borderRadius
+                            , UI.Animations.pulse index
+                            ]
+                        ]
+                        []
+                )
+            |> div
+                [ css
+                    [ Css.displayFlex
+                    , Css.flexDirection Css.column
+                    , Css.property "gap" "1rem"
+                    ]
+                ]
+        , div
+            [ css
+                [ Css.width (Css.pct 100)
+                , Css.height (Css.px 53)
+                , Css.backgroundColor theme.colors.primary.lighter
+                , Css.borderRadius theme.borderRadius
+                , Css.marginTop (Css.rem 1.5)
+                , UI.Animations.pulse 5
+                ]
+            ]
+            []
+        ]
 
 
 

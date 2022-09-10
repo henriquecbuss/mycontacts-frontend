@@ -1,6 +1,5 @@
 module Shared exposing
-    ( CategoryStatus(..)
-    , Flags
+    ( Flags
     , Model
     , Msg
     , init
@@ -14,6 +13,7 @@ import Category exposing (Category)
 import Json.Decode as Json
 import Request exposing (Request)
 import Themes exposing (Theme)
+import WebData exposing (WebData)
 
 
 type alias Flags =
@@ -22,14 +22,8 @@ type alias Flags =
 
 type alias Model =
     { theme : Theme
-    , availableCategories : CategoryStatus
+    , availableCategories : WebData Api.HttpClient.Error (List Category)
     }
-
-
-type CategoryStatus
-    = Loading
-    | Loaded (List Category)
-    | WithError Api.HttpClient.Error
 
 
 type Msg
@@ -39,7 +33,7 @@ type Msg
 init : Request -> Flags -> ( Model, Cmd Msg )
 init _ _ =
     ( { theme = Themes.default
-      , availableCategories = Loading
+      , availableCategories = WebData.Loading
       }
     , Api.Category.list CompletedLoadCategories
     )
@@ -49,10 +43,10 @@ update : Request -> Msg -> Model -> ( Model, Cmd Msg )
 update _ msg model =
     case msg of
         CompletedLoadCategories (Ok categories) ->
-            ( { model | availableCategories = Loaded categories }, Cmd.none )
+            ( { model | availableCategories = WebData.Loaded categories }, Cmd.none )
 
         CompletedLoadCategories (Err err) ->
-            ( { model | availableCategories = WithError err }, Cmd.none )
+            ( { model | availableCategories = WebData.WithError err }, Cmd.none )
 
 
 subscriptions : Request -> Model -> Sub Msg

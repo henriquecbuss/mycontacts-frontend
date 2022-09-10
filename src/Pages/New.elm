@@ -14,6 +14,7 @@ import Shared
 import UI
 import UI.Form
 import View exposing (View)
+import WebData
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -86,7 +87,7 @@ view : Shared.Model -> Model -> View Msg
 view shared model =
     [ UI.pageHeader shared.theme "Novo contato"
     , case shared.availableCategories of
-        Shared.Loaded categories ->
+        WebData.Loaded categories ->
             Form.View.custom (UI.Form.viewConfig shared.theme)
                 { onChange = FormChanged
                 , action = "Cadastrar"
@@ -98,6 +99,18 @@ view shared model =
                 )
                 model
 
-        _ ->
-            text ""
+        WebData.Loading ->
+            Contact.formSkeleton shared.theme
+
+        WebData.WithError _ ->
+            Form.View.custom (UI.Form.viewConfig shared.theme)
+                { onChange = FormChanged
+                , action = "Cadastrar"
+                , loading = "Cadastrando"
+                , validation = Form.View.ValidateOnBlur
+                }
+                (Contact.form []
+                    |> Form.map SubmittedForm
+                )
+                model
     ]
