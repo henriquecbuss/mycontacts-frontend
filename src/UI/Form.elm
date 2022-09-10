@@ -140,7 +140,7 @@ inputField theme type_ { onChange, onBlur, disabled, value, error, showError, at
                 [ Css.position Css.absolute
                 , Css.cursor Css.text_
                 , Css.color placeholderColor
-                , Css.transform (Css.translate2 (Css.px 16) (Css.px 16))
+                , Css.transform (Css.translate2 (Css.px 18) (Css.px 18))
                 , Css.Transitions.transition
                     [ Css.Transitions.transform3 75 0 Css.Transitions.linear
                     ]
@@ -153,7 +153,7 @@ inputField theme type_ { onChange, onBlur, disabled, value, error, showError, at
                     [ Css.property "content" "''"
                     , Css.zIndex (Css.int -1)
                     , Css.position Css.absolute
-                    , Css.top (Css.pct 50)
+                    , Css.top (Css.px 13)
                     , Css.right (Css.px -sidePadding)
                     , Css.transform (Css.translateY (Css.pct -50))
                     , Css.height theme.borderWidth
@@ -173,13 +173,13 @@ inputField theme type_ { onChange, onBlur, disabled, value, error, showError, at
             , css
                 [ Css.padding (Css.rem 1)
                 , Css.width (Css.pct 100)
-                , Css.outline3 theme.borderWidth Css.solid outlineColor
-                , Css.border Css.zero
+                , Css.border3 theme.borderWidth Css.solid outlineColor
+                , Css.outline Css.none
                 , Css.borderRadius theme.borderRadius
                 , Css.boxShadow4 Css.zero (Css.px 4) (Css.px 10) (Css.rgba 0 0 0 0.04)
                 , Css.color inputColor
                 , Css.focus
-                    [ Css.outlineColor focusedOutlineColor
+                    [ Css.borderColor focusedOutlineColor
                     ]
                 , Css.pseudoElement "placeholder"
                     [ Css.color placeholderColor
@@ -340,7 +340,7 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
                     [ Css.property "content" "''"
                     , Css.zIndex (Css.int -1)
                     , Css.position Css.absolute
-                    , Css.top (Css.pct 50)
+                    , Css.top (Css.px 13)
                     , Css.right (Css.px -sidePadding)
                     , Css.transform (Css.translateY (Css.pct -50))
                     , Css.height theme.borderWidth
@@ -357,15 +357,17 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
             , Events.onInput onChange
             , optionalAttribute Events.onBlur onBlur
             , css
-                [ Css.padding (Css.rem 1)
+                [ Css.property "appearance" "none"
+                , Css.backgroundColor theme.colors.white
+                , Css.padding (Css.rem 1)
                 , Css.width (Css.pct 100)
-                , Css.outline3 theme.borderWidth Css.solid outlineColor
-                , Css.border Css.zero
+                , Css.border3 theme.borderWidth Css.solid outlineColor
+                , Css.outline Css.none
                 , Css.borderRadius theme.borderRadius
                 , Css.boxShadow4 Css.zero (Css.px 4) (Css.px 10) (Css.rgba 0 0 0 0.04)
                 , Css.color inputColor
                 , Css.focus
-                    [ Css.outlineColor focusedOutlineColor
+                    [ Css.borderColor focusedOutlineColor
                     ]
                 , Css.pseudoElement "placeholder"
                     [ Css.color placeholderColor
@@ -386,9 +388,9 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
         , Html.Styled.span
             [ css
                 [ Css.position Css.absolute
-                , Css.top Css.zero
-                , Css.bottom Css.zero
-                , Css.right Css.zero
+                , Css.top (Css.px sidePadding)
+                , Css.bottom (Css.px sidePadding)
+                , Css.right (Css.px sidePadding)
                 , Css.backgroundColor theme.colors.white
                 , Css.padding2 Css.zero (Css.rem 1)
                 , Css.borderRadius theme.borderRadius
