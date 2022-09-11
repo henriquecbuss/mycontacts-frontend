@@ -138,6 +138,6 @@ view shared model =
             ]
 
         Loading ->
-            [ UI.pageHeader shared.theme "Editar"
+            [ UI.pageHeader shared.theme "Carregando..."
             , Contact.formSkeleton shared.theme
             ]

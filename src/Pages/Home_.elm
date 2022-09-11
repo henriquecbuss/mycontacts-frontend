@@ -415,7 +415,7 @@ header theme contactsStatus =
         [ h1 [ css [ Css.fontSize (Css.rem 1.5) ] ]
             [ case contactsStatus of
                 Loading ->
-                    text ""
+                    text "Carregando contatos..."
 
                 Loaded contacts ->
                     if List.length contacts == 1 then
