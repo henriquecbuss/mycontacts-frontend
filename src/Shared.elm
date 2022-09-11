@@ -13,6 +13,7 @@ import Category exposing (Category)
 import Json.Decode as Json
 import Request exposing (Request)
 import Themes exposing (Theme)
+import UI.Toast
 import WebData exposing (WebData)
 
 
@@ -23,6 +24,7 @@ type alias Flags =
 type alias Model =
     { theme : Theme
     , availableCategories : WebData Api.HttpClient.Error (List Category)
+    , toasts : List UI.Toast.Model
     }
 
 
@@ -34,6 +36,7 @@ init : Request -> Flags -> ( Model, Cmd Msg )
 init _ _ =
     ( { theme = Themes.default
       , availableCategories = WebData.Loading
+      , toasts = []
       }
     , Api.Category.list CompletedLoadCategories
     )

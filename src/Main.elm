@@ -129,7 +129,7 @@ view : Model -> Browser.Document Msg
 view model =
     Pages.view model.page model.shared model.url model.key
         |> View.map Page
-        |> View.toBrowserDocument model.shared.theme
+        |> View.toBrowserDocument model.shared
 
 
 

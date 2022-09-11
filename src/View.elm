@@ -5,7 +5,9 @@ import Css exposing (backgroundColor, borderBox, boxSizing, color, fontFamilies,
 import Css.Global exposing (body, everything, global)
 import Html.Styled exposing (div, img)
 import Html.Styled.Attributes exposing (css, src)
+import Shared
 import Themes exposing (Theme)
+import UI.Toast
 
 
 type alias View msg =
@@ -27,8 +29,8 @@ map fn view =
     List.map (Html.Styled.map fn) view
 
 
-toBrowserDocument : Theme -> View msg -> Browser.Document msg
-toBrowserDocument theme view =
+toBrowserDocument : Shared.Model -> View msg -> Browser.Document msg
+toBrowserDocument shared view =
     { title = "MyContacts"
     , body =
         [ global
@@ -40,11 +42,25 @@ toBrowserDocument theme view =
                 , fontSize (px 16)
                 ]
             , body
-                [ backgroundColor theme.colors.background
-                , color theme.colors.foreground
+                [ backgroundColor shared.theme.colors.background
+                , color shared.theme.colors.foreground
                 ]
             ]
         , defaultContainer (header :: view)
+        , UI.Toast.view shared.theme
+            [ { variant = UI.Toast.Default
+              , message = "Default toast"
+              , id = 0
+              }
+            , { variant = UI.Toast.Error
+              , message = "Error toast"
+              , id = 1
+              }
+            , { variant = UI.Toast.Success
+              , message = "Success toast"
+              , id = 2
+              }
+            ]
         ]
             |> List.map Html.Styled.toUnstyled
     }
@@ -73,6 +89,7 @@ defaultContainer children =
             , Css.margin2 zero Css.auto
             , Css.padding2 zero (Css.rem 1)
             , Css.paddingBottom (Css.px 100)
+            , Css.property "isolation" "isolate"
             ]
         ]
         children
