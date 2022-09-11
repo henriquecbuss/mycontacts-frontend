@@ -72,9 +72,12 @@ update req msg model =
             )
 
         CompletedCreatingContact (Ok _) ->
-            ( { model | state = Form.View.Success "Contato criado com sucesso" }
-              -- , Request.pushRoute Gen.Route.Home_ req
-              --     |> Effect.fromCmd
+            ( Form.View.idle
+                { name = ""
+                , email = ""
+                , phone = ""
+                , category = ""
+                }
             , Shared.ShowToast UI.Toast.Success "Contato cadastrado"
                 |> Effect.fromShared
             )

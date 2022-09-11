@@ -4,6 +4,7 @@ import Api.Contact
 import Api.HttpClient
 import Contact
 import Css
+import Effect exposing (Effect)
 import Form
 import Form.View
 import Gen.Params.Edit.Id_ exposing (Params)
@@ -16,13 +17,14 @@ import Shared
 import UI
 import UI.Animations
 import UI.Form
+import UI.Toast
 import View exposing (View)
 import WebData
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared req =
-    Page.element
+    Page.advanced
         { init = init req.params.id
         , update = update req
         , view = view shared
@@ -37,13 +39,13 @@ page shared req =
 type Model
     = Loading
     | Loaded Contact.Model (Form.View.Model Contact.Input)
-    | WithError Api.HttpClient.Error
 
 
-init : String -> ( Model, Cmd Msg )
+init : String -> ( Model, Effect Msg )
 init contactId =
     ( Loading
     , Api.Contact.getById contactId CompletedLoadContact
+        |> Effect.fromCmd
     )
 
 
@@ -58,26 +60,42 @@ type Msg
     | CompletedSaveContact (Api.HttpClient.Response Contact.Model)
 
 
-update : Request.With Params -> Msg -> Model -> ( Model, Cmd Msg )
+update : Request.With Params -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
     case msg of
         FormChanged contact newForm ->
-            ( Loaded contact newForm, Cmd.none )
+            ( Loaded contact newForm, Effect.none )
 
         SubmittedForm contact contactOutput ->
-            ( model, Api.Contact.update contact contactOutput CompletedSaveContact )
+            ( model
+            , Api.Contact.update contact contactOutput CompletedSaveContact
+                |> Effect.fromCmd
+            )
 
         CompletedLoadContact (Ok contact) ->
-            ( Loaded contact (Contact.formFromContact contact), Cmd.none )
+            ( Loaded contact (Contact.formFromContact contact), Effect.none )
 
         CompletedLoadContact (Err err) ->
-            ( WithError err, Cmd.none )
+            ( model
+            , Effect.batch
+                [ Shared.ShowToast UI.Toast.Error "Contato não encontrado"
+                    |> Effect.fromShared
+                , Request.pushRoute Gen.Route.Home_ req
+                    |> Effect.fromCmd
+                ]
+            )
 
         CompletedSaveContact (Ok _) ->
-            ( model, Request.pushRoute Gen.Route.Home_ req )
+            ( model
+            , Shared.ShowToast UI.Toast.Success "Contato atualizado"
+                |> Effect.fromShared
+            )
 
         CompletedSaveContact (Err err) ->
-            ( WithError err, Cmd.none )
+            ( model
+            , Shared.ShowToast UI.Toast.Error "Ocorreu um erro ao atualizar o contato"
+                |> Effect.fromShared
+            )
 
 
 
@@ -123,6 +141,3 @@ view shared model =
             [ UI.pageHeader shared.theme "Editar"
             , Contact.formSkeleton shared.theme
             ]
-
-        WithError _ ->
-            []
