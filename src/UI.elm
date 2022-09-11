@@ -1,6 +1,7 @@
-module UI exposing (Variant(..), button, pageHeader)
+module UI exposing (Variant(..), button, pageHeader, spinner)
 
 import Css
+import Css.Animations
 import Css.Transitions
 import Gen.Route
 import Html.Styled
@@ -18,11 +19,11 @@ type Variant
 button :
     Theme
     -> Variant
-    -> { onClick : Maybe msg, disabled : Bool }
+    -> { onClick : Maybe msg, isDisabled : Bool, isLoading : Bool }
     -> List Css.Style
     -> List (Html.Styled.Html msg)
     -> Html.Styled.Html msg
-button theme variant { onClick, disabled } styles children =
+button theme variant { onClick, isDisabled, isLoading } styles children =
     let
         background =
             case variant of
@@ -51,7 +52,7 @@ button theme variant { onClick, disabled } styles children =
     Html.Styled.button
         [ optionalAttribute (Events.preventDefaultOn "click")
             (Maybe.map (\handler -> Json.Decode.succeed ( handler, True )) onClick)
-        , Attributes.disabled disabled
+        , Attributes.disabled (isDisabled || isLoading)
         , Attributes.css
             (Css.backgroundColor background
                 :: Css.color theme.colors.white
@@ -77,7 +78,26 @@ button theme variant { onClick, disabled } styles children =
                 :: styles
             )
         ]
-        children
+        (if isLoading then
+            [ spinner
+                [ Css.position Css.absolute
+                , Css.left (Css.pct 50)
+                , Css.transform (Css.translateX (Css.pct -50))
+                ]
+                theme
+                { size = 21 }
+            , Html.Styled.div
+                [ Attributes.css
+                    [ Css.opacity Css.zero
+                    , Css.pointerEvents Css.none
+                    ]
+                ]
+                children
+            ]
+
+         else
+            children
+        )
 
 
 pageHeader : Theme -> String -> Html.Styled.Html msg
@@ -126,6 +146,41 @@ pageHeader theme title =
             ]
             [ Html.Styled.text title ]
         ]
+
+
+spinner : List Css.Style -> Theme -> { size : Float } -> Html.Styled.Html msg
+spinner styles theme { size } =
+    let
+        animation =
+            Css.Animations.keyframes
+                [ ( 0, [ Css.Animations.transform [ Css.rotate (Css.deg 0) ] ] )
+                , ( 100, [ Css.Animations.transform [ Css.rotate (Css.deg 360) ] ] )
+                ]
+    in
+    Html.Styled.div
+        [ Attributes.css
+            (Css.after
+                [ Css.animationName animation
+                , Css.animationDuration (Css.ms 1500)
+                , Css.animationIterationCount Css.infinite
+                , Css.border3 (Css.px 5) Css.solid theme.colors.primary.lighter
+                , Css.borderBottomColor theme.colors.primary.main
+                , Css.property "content" "''"
+                , Css.position Css.absolute
+                , Css.top Css.zero
+                , Css.left Css.zero
+                , Css.height (Css.px size)
+                , Css.width (Css.px size)
+                , Css.borderRadius (Css.pct 50)
+                , Css.property "will-change" "transform"
+                ]
+                :: Css.width (Css.px size)
+                :: Css.height (Css.px size)
+                :: Css.position Css.relative
+                :: styles
+            )
+        ]
+        []
 
 
 

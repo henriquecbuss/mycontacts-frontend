@@ -6,6 +6,7 @@ import Contact
 import Css
 import Css.Global
 import Css.Transitions
+import Effect exposing (Effect)
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route
 import Html.Styled exposing (a, br, button, div, h1, h2, hr, img, input, p, span, strong, text)
@@ -18,12 +19,13 @@ import Shared
 import Themes exposing (Theme)
 import UI
 import UI.Modal
+import UI.Toast
 import View exposing (View)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared _ =
-    Page.element
+    Page.advanced
         { init = init
         , update = update
         , view = view shared.theme
@@ -39,8 +41,14 @@ type alias Model =
     { sortDirection : Api.HttpClient.SortDirection
     , search : String
     , contacts : ContactsStatus
-    , deletingContact : Maybe Contact.Model
+    , deletingContact : DeletingContactStatus
     }
+
+
+type DeletingContactStatus
+    = NotDeleting
+    | Confirming Contact.Model
+    | Deleting Contact.Model
 
 
 type ContactsStatus
@@ -49,7 +57,7 @@ type ContactsStatus
     | WithError Api.HttpClient.Error
 
 
-init : ( Model, Cmd Msg )
+init : ( Model, Effect Msg )
 init =
     let
         defaultSortDirection =
@@ -58,9 +66,10 @@ init =
     ( { sortDirection = defaultSortDirection
       , search = ""
       , contacts = Loading
-      , deletingContact = Nothing
+      , deletingContact = NotDeleting
       }
     , Api.Contact.list defaultSortDirection CompletedLoadContacts
+        |> Effect.fromCmd
     )
 
 
@@ -79,7 +88,7 @@ type Msg
     | CompletedDeleteContact (Api.HttpClient.Response ())
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         ClickedToggleSortDirection ->
@@ -97,6 +106,7 @@ update msg model =
                 , contacts = Loading
               }
             , Api.Contact.list newSortDirection CompletedLoadContacts
+                |> Effect.fromCmd
             )
 
         CompletedLoadContacts response ->
@@ -109,33 +119,48 @@ update msg model =
                         Err err ->
                             WithError err
               }
-            , Cmd.none
+            , Effect.none
             )
 
         RequestedRetryContacts ->
             ( { model | contacts = Loading }
             , Api.Contact.list model.sortDirection CompletedLoadContacts
+                |> Effect.fromCmd
             )
 
         EnteredSearchTerm searchTerm ->
-            ( { model | search = searchTerm }, Cmd.none )
+            ( { model | search = searchTerm }, Effect.none )
 
         ClosedModal ->
-            ( { model | deletingContact = Nothing }, Cmd.none )
+            ( { model | deletingContact = NotDeleting }, Effect.none )
 
         ClickedDeleteContact contact ->
-            ( { model | deletingContact = Just contact }, Cmd.none )
+            ( { model | deletingContact = Confirming contact }, Effect.none )
 
         ConfirmedDeleteContact contact ->
-            ( { model
-                | contacts = Loading
-                , deletingContact = Nothing
-              }
+            ( { model | deletingContact = Deleting contact }
             , Api.Contact.delete contact CompletedDeleteContact
+                |> Effect.fromCmd
+            )
+
+        CompletedDeleteContact (Ok _) ->
+            ( { model
+                | deletingContact = NotDeleting
+                , contacts = Loading
+              }
+            , Effect.batch
+                [ Api.Contact.list model.sortDirection CompletedLoadContacts
+                    |> Effect.fromCmd
+                , Shared.ShowToast UI.Toast.Success "Contato removido com sucesso"
+                    |> Effect.fromShared
+                ]
             )
 
         CompletedDeleteContact _ ->
-            ( model, Api.Contact.list model.sortDirection CompletedLoadContacts )
+            ( { model | deletingContact = NotDeleting }
+            , Shared.ShowToast UI.Toast.Error "Ocorreu um erro ao remover o contato"
+                |> Effect.fromShared
+            )
 
 
 
@@ -182,8 +207,8 @@ hasNoContacts model =
 
 viewDeleteContactModal : Theme -> Model -> Html.Styled.Html Msg
 viewDeleteContactModal theme model =
-    case model.deletingContact of
-        Just contact ->
+    let
+        viewModal isDeleting contact =
             UI.Modal.init ClosedModal
                 |> UI.Modal.withHeader
                     ("Tem certeza que deseja remover o contato \""
@@ -193,9 +218,17 @@ viewDeleteContactModal theme model =
                 |> UI.Modal.withBody "Esta ação não poderá ser desfeita!"
                 |> UI.Modal.withAction "Deletar" (ConfirmedDeleteContact contact)
                 |> UI.Modal.withVariant UI.Danger
+                |> UI.Modal.withIsLoading isDeleting
                 |> UI.Modal.view theme
+    in
+    case model.deletingContact of
+        Confirming contact ->
+            viewModal False contact
 
-        Nothing ->
+        Deleting contact ->
+            viewModal True contact
+
+        NotDeleting ->
             text ""
 
 
@@ -349,7 +382,10 @@ viewBody theme model =
                             [ text "Ocorreu um erro ao obter os seus contatos!" ]
                         , UI.button theme
                             UI.Primary
-                            { onClick = Just RequestedRetryContacts, disabled = False }
+                            { onClick = Just RequestedRetryContacts
+                            , isDisabled = False
+                            , isLoading = False
+                            }
                             [ Css.marginTop (Css.rem 0.5) ]
                             [ text "Tentar obter novamente" ]
                         ]

@@ -51,7 +51,8 @@ form theme { onSubmit, action, loading, state, fields } =
                     theme
                     UI.Primary
                     { onClick = onSubmit
-                    , disabled = onSubmit == Nothing
+                    , isDisabled = onSubmit == Nothing
+                    , isLoading = state == Form.View.Loading
                     }
                     [ Css.marginTop (Css.rem 0.5) ]
                     [ if state == Form.View.Loading then

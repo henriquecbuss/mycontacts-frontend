@@ -5,13 +5,14 @@ module UI.Modal exposing
     , withAction
     , withBody
     , withHeader
+    , withIsLoading
     , withVariant
     , withVisible
     )
 
 import Css
-import Html.Styled exposing (button, div, h1, node, p, text)
-import Html.Styled.Attributes exposing (css)
+import Html.Styled exposing (button, div, h1, node, p, span, text)
+import Html.Styled.Attributes exposing (css, disabled)
 import Html.Styled.Events as Events
 import Json.Decode
 import Themes exposing (Theme)
@@ -24,6 +25,7 @@ type Modal constraints msg
         , body : Maybe String
         , cancelAction : String
         , action : Maybe { text : String, toMsg : msg }
+        , isLoading : Bool
         , variant : UI.Variant
         , onClose : msg
         , isVisible : Bool
@@ -41,6 +43,7 @@ init onClose =
         , body = Nothing
         , cancelAction = "Cancelar"
         , action = Nothing
+        , isLoading = False
         , variant = UI.Primary
         , onClose = onClose
         , isVisible = True
@@ -69,6 +72,11 @@ withCancelAction cancelAction (Modal modal) =
 withAction : String -> msg -> Modal constraints msg -> Modal constraints msg
 withAction action onClick (Modal modal) =
     Modal { modal | action = Just { text = action, toMsg = onClick } }
+
+
+withIsLoading : Bool -> Modal constraints msg -> Modal constraints msg
+withIsLoading isLoading (Modal modal) =
+    Modal { modal | isLoading = isLoading }
 
 
 withVariant : UI.Variant -> Modal constraints msg -> Modal constraints msg
@@ -154,14 +162,17 @@ view theme (Modal modal) =
                     ]
                     [ button
                         [ Events.onClick modal.onClose
+                        , disabled modal.isLoading
                         , css
                             [ Css.backgroundColor Css.transparent
                             , Css.border Css.zero
                             , Css.outline Css.none
                             , Css.color theme.colors.gray.light
-                            , Css.cursor Css.pointer
-                            , Css.hover
-                                [ Css.textDecoration Css.underline
+                            , Css.pseudoClass "not([disabled])"
+                                [ Css.hover
+                                    [ Css.textDecoration Css.underline
+                                    ]
+                                , Css.cursor Css.pointer
                                 ]
                             , Css.pseudoClass "focus-visible"
                                 [ Css.outline3 (Css.px 4) Css.solid theme.colors.gray.lightest
@@ -176,11 +187,13 @@ view theme (Modal modal) =
                             UI.button theme
                                 modal.variant
                                 { onClick = Just action.toMsg
-                                , disabled = False
+                                , isDisabled = False
+                                , isLoading = modal.isLoading
                                 }
                                 [ Css.marginLeft (Css.rem 2)
                                 , Css.paddingTop (Css.px 10)
                                 , Css.paddingBottom (Css.px 10)
+                                , Css.position Css.relative
                                 ]
                                 [ text action.text ]
                         )

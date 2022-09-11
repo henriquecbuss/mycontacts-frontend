@@ -38,7 +38,11 @@ toBrowserDocument shared fromSharedMsg view =
     { title = "MyContacts"
     , body =
         [ global
-            [ everything
+            [ Css.Global.each
+                [ everything
+                , Css.Global.selector "*::after"
+                , Css.Global.selector "*::before"
+                ]
                 [ margin zero
                 , padding zero
                 , border zero
