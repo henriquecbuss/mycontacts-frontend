@@ -16,7 +16,6 @@ import Category exposing (Category)
 import Dict exposing (Dict)
 import Html.Styled
 import Json.Decode as Json
-import Process
 import Request exposing (Request)
 import Task
 import Themes exposing (Theme)
@@ -73,8 +72,7 @@ update _ msg model =
                         (Maybe.map (\toast -> { toast | status = UI.Toast.Removing }))
                         model.toasts
               }
-            , Process.sleep 1000
-                |> Task.perform (\_ -> FinishedRemovingToast toastId)
+            , Cmd.none
             )
 
         FinishedRemovingToast toastId ->
@@ -92,8 +90,7 @@ updateEffect effect model =
                         model.toasts
                 , lastToastId = model.lastToastId + 1
               }
-            , Process.sleep UI.Toast.duration
-                |> Task.perform (\_ -> StartedRemovingToast (model.lastToastId + 1))
+            , Cmd.none
             )
 
 
@@ -109,7 +106,9 @@ viewToasts model =
         |> List.map
             (\( id, toast ) ->
                 ( String.fromInt id
-                , { onRemove = StartedRemovingToast id
+                , { onStartRemoving = StartedRemovingToast id
+                  , onFinishedRemoving = FinishedRemovingToast id
+                  , duration = UI.Toast.defaultDuration
                   , toast = toast
                   }
                 )

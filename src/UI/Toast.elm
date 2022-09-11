@@ -1,12 +1,13 @@
-module UI.Toast exposing (Model, Status(..), Variant(..), duration, idle, view)
+module UI.Toast exposing (Model, Status(..), Variant(..), defaultDuration, idle, view)
 
 import Css
 import Css.Animations
 import Css.Transitions
 import Html.Styled exposing (button, div, li, text)
 import Html.Styled.Attributes exposing (css)
-import Html.Styled.Events exposing (onClick)
+import Html.Styled.Events
 import Html.Styled.Keyed
+import Json.Decode
 import Json.Encode
 import Themes exposing (Theme)
 import UI.Animations
@@ -39,7 +40,18 @@ idle variant message =
     }
 
 
-view : Theme -> List ( String, { onRemove : msg, toast : Model } ) -> Html.Styled.Html msg
+view :
+    Theme
+    ->
+        List
+            ( String
+            , { onStartRemoving : msg
+              , onFinishedRemoving : msg
+              , duration : Css.Duration {}
+              , toast : Model
+              }
+            )
+    -> Html.Styled.Html msg
 view theme toasts =
     Html.Styled.Keyed.ul
         [ css [ Css.property "isolation" "isolate" ]
@@ -48,9 +60,15 @@ view theme toasts =
             |> List.sortBy Tuple.first
             |> List.reverse
             |> List.indexedMap
-                (\index ( toastId, { onRemove, toast } ) ->
+                (\index ( toastId, { toast } as options ) ->
                     ( toastId
-                    , viewSingle theme index onRemove toast
+                    , viewSingle theme
+                        { index = index
+                        , duration = options.duration
+                        , onStartRemoving = options.onStartRemoving
+                        , onFinishedRemoving = options.onFinishedRemoving
+                        }
+                        toast
                     )
                 )
         )
@@ -58,11 +76,15 @@ view theme toasts =
 
 viewSingle :
     Theme
-    -> Int
-    -> msg
+    ->
+        { index : Int
+        , duration : Css.Duration {}
+        , onStartRemoving : msg
+        , onFinishedRemoving : msg
+        }
     -> Model
     -> Html.Styled.Html msg
-viewSingle theme index onRemove model =
+viewSingle theme options model =
     let
         iconStyles =
             [ Css.marginRight (Css.px 8)
@@ -82,7 +104,7 @@ viewSingle theme index onRemove model =
             , Css.left (Css.pct 50)
             , Css.transform (Css.translateX (Css.pct -50))
             , Css.listStyle Css.none
-            , Css.zIndex (Css.int (999999 - index))
+            , Css.zIndex (Css.int (999999 - options.index))
             ]
         ]
         [ div
@@ -95,6 +117,13 @@ viewSingle theme index onRemove model =
                         UI.Animations.fadeOutAbove 10
                 , Css.animationDuration (Css.ms 1000)
                 ]
+            , case model.status of
+                Idle ->
+                    css []
+
+                Removing ->
+                    Html.Styled.Events.on "animationend"
+                        (Json.Decode.succeed options.onFinishedRemoving)
             ]
             [ button
                 [ css
@@ -108,8 +137,8 @@ viewSingle theme index onRemove model =
                     , Css.justifyContent Css.center
                     , Css.cursor Css.pointer
                     , Css.transforms
-                        [ Css.translateY (Css.px (-12 * toFloat index))
-                        , Css.translateY (Css.pct (-100 * toFloat index))
+                        [ Css.translateY (Css.px (-12 * toFloat options.index))
+                        , Css.translateY (Css.pct (-100 * toFloat options.index))
                         ]
                     , Css.Transitions.transition
                         [ Css.Transitions.transform 1000
@@ -133,6 +162,8 @@ viewSingle theme index onRemove model =
 
                             Success ->
                                 Css.backgroundColor theme.colors.success.light
+                        , Css.after
+                            [ Css.property "animation-play-state" "paused" ]
                         ]
                     , Css.boxShadow5 (Css.px 0)
                         (Css.px 20)
@@ -149,7 +180,7 @@ viewSingle theme index onRemove model =
                         , Css.height (Css.px 2)
                         , Css.backgroundColor theme.colors.white
                         , Css.animationName timerAnimation
-                        , Css.animationDuration (Css.ms duration)
+                        , Css.animationDuration options.duration
                         , Css.animationIterationCount (Css.num 1)
                         , Css.property "animation-timing-function" "linear"
                         , Css.property "animation-fill-mode" "forwards"
@@ -158,11 +189,12 @@ viewSingle theme index onRemove model =
                     ]
                 , case model.status of
                     Idle ->
-                        onClick onRemove
+                        Html.Styled.Events.onClick options.onStartRemoving
 
                     Removing ->
                         css []
                 , Html.Styled.Attributes.property "role" (Json.Encode.string "alert")
+                , Html.Styled.Events.on "animationend" (Json.Decode.succeed options.onStartRemoving)
                 ]
                 [ case model.variant of
                     Default ->
@@ -179,6 +211,6 @@ viewSingle theme index onRemove model =
         ]
 
 
-duration : Float
-duration =
-    3000
+defaultDuration : Css.Duration {}
+defaultDuration =
+    Css.ms 3000
