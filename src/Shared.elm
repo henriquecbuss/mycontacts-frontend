@@ -92,7 +92,7 @@ updateEffect effect model =
                         model.toasts
                 , lastToastId = model.lastToastId + 1
               }
-            , Process.sleep 3000
+            , Process.sleep UI.Toast.duration
                 |> Task.perform (\_ -> StartedRemovingToast (model.lastToastId + 1))
             )
 
@@ -105,5 +105,5 @@ subscriptions _ _ =
 viewToasts : Model -> Html.Styled.Html msg
 viewToasts model =
     model.toasts
-        |> Dict.values
+        |> Dict.toList
         |> UI.Toast.view model.theme
