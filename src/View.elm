@@ -47,20 +47,7 @@ toBrowserDocument shared view =
                 ]
             ]
         , defaultContainer (header :: view)
-        , UI.Toast.view shared.theme
-            [ { variant = UI.Toast.Default
-              , message = "Default toast"
-              , id = 0
-              }
-            , { variant = UI.Toast.Error
-              , message = "Error toast"
-              , id = 1
-              }
-            , { variant = UI.Toast.Success
-              , message = "Success toast"
-              , id = 2
-              }
-            ]
+        , Shared.viewToasts shared
         ]
             |> List.map Html.Styled.toUnstyled
     }

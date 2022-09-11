@@ -3,6 +3,7 @@ module Pages.New exposing (Model, Msg, page)
 import Api.Contact
 import Api.HttpClient
 import Contact
+import Effect exposing (Effect)
 import Form
 import Form.View
 import Gen.Params.New exposing (Params)
@@ -13,13 +14,14 @@ import Request
 import Shared
 import UI
 import UI.Form
+import UI.Toast
 import View exposing (View)
 import WebData
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared req =
-    Page.element
+    Page.advanced
         { init = init
         , update = update req
         , view = view shared
@@ -35,7 +37,7 @@ type alias Model =
     Form.View.Model Contact.Input
 
 
-init : ( Model, Cmd Msg )
+init : ( Model, Effect Msg )
 init =
     ( Form.View.idle
         { name = ""
@@ -43,7 +45,7 @@ init =
         , phone = ""
         , category = ""
         }
-    , Cmd.none
+    , Effect.none
     )
 
 
@@ -57,17 +59,31 @@ type Msg
     | CompletedCreatingContact (Api.HttpClient.Response Contact.Model)
 
 
-update : Request.With Params -> Msg -> Model -> ( Model, Cmd Msg )
+update : Request.With Params -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
     case msg of
         FormChanged newForm ->
-            ( newForm, Cmd.none )
+            ( newForm, Effect.none )
 
         SubmittedForm contactOutput ->
-            ( model, Api.Contact.create contactOutput CompletedCreatingContact )
+            ( { model | state = Form.View.Loading }
+            , Api.Contact.create contactOutput CompletedCreatingContact
+                |> Effect.fromCmd
+            )
 
-        CompletedCreatingContact _ ->
-            ( model, Request.pushRoute Gen.Route.Home_ req )
+        CompletedCreatingContact (Ok _) ->
+            ( { model | state = Form.View.Success "Contato criado com sucesso" }
+              -- , Request.pushRoute Gen.Route.Home_ req
+              --     |> Effect.fromCmd
+            , Shared.ShowToast UI.Toast.Success "Contato cadastrado"
+                |> Effect.fromShared
+            )
+
+        CompletedCreatingContact (Err _) ->
+            ( { model | state = Form.View.Error "Ocorreu um erro ao cadastrar o contato" }
+            , Shared.ShowToast UI.Toast.Error "Ocorreu um erro ao cadastrar o contato"
+                |> Effect.fromShared
+            )
 
 
 

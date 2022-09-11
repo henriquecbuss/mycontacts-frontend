@@ -1,4 +1,4 @@
-module UI.Animations exposing (fadeInFromBelow, pulse)
+module UI.Animations exposing (fadeInFromBelow, fadeOutAbove, pulse)
 
 import Css
 import Css.Animations
@@ -35,6 +35,29 @@ fadeInFromBelow translationAmount =
                 , ( 100
                   , [ Css.Animations.opacity (Css.num 1)
                     , Css.Animations.transform [ Css.translateY (Css.px 0) ]
+                    ]
+                  )
+                ]
+    in
+    Css.batch
+        [ Css.animationName keyframes
+        , Css.animationIterationCount (Css.num 1)
+        ]
+
+
+fadeOutAbove : Float -> Css.Style
+fadeOutAbove translationAmount =
+    let
+        keyframes =
+            Css.Animations.keyframes
+                [ ( 0
+                  , [ Css.Animations.opacity (Css.num 1)
+                    , Css.Animations.transform [ Css.translateY (Css.px 0) ]
+                    ]
+                  )
+                , ( 100
+                  , [ Css.Animations.opacity (Css.num 0)
+                    , Css.Animations.transform [ Css.translateY (Css.px -translationAmount) ]
                     ]
                   )
                 ]

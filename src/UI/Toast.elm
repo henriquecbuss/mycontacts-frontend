@@ -1,4 +1,4 @@
-module UI.Toast exposing (Model, Variant(..), view)
+module UI.Toast exposing (Model, Status(..), Variant(..), idle, view)
 
 import Css
 import Html.Styled exposing (div, text)
@@ -14,10 +14,23 @@ type Variant
     | Success
 
 
+type Status
+    = Idle
+    | Removing
+
+
 type alias Model =
     { variant : Variant
     , message : String
-    , id : Int
+    , status : Status
+    }
+
+
+idle : Variant -> String -> Model
+idle variant message =
+    { variant = variant
+    , message = message
+    , status = Idle
     }
 
 
@@ -42,7 +55,7 @@ viewSingle :
     Theme
     -> Model
     -> Html.Styled.Html msg
-viewSingle theme { variant, message } =
+viewSingle theme model =
     let
         iconStyles =
             [ Css.marginRight (Css.px 8)
@@ -57,7 +70,7 @@ viewSingle theme { variant, message } =
             , Css.displayFlex
             , Css.alignItems Css.center
             , Css.justifyContent Css.center
-            , case variant of
+            , case model.variant of
                 Default ->
                     Css.backgroundColor theme.colors.primary.main
 
@@ -71,11 +84,16 @@ viewSingle theme { variant, message } =
                 (Css.px 20)
                 (Css.px -16)
                 (Css.hex "00000040")
-            , UI.Animations.fadeInFromBelow 10
             , Css.animationDuration (Css.ms 1000)
+            , case model.status of
+                Idle ->
+                    UI.Animations.fadeInFromBelow 10
+
+                Removing ->
+                    UI.Animations.fadeOutAbove 10
             ]
         ]
-        [ case variant of
+        [ case model.variant of
             Default ->
                 text ""
 
@@ -84,5 +102,5 @@ viewSingle theme { variant, message } =
 
             Success ->
                 UI.Icons.checkCircle iconStyles
-        , text message
+        , text model.message
         ]

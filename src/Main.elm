@@ -48,7 +48,7 @@ init flags url key =
     ( Model url key shared page
     , Cmd.batch
         [ Cmd.map Shared sharedCmd
-        , Effect.toCmd ( Shared, Page ) effect
+        , Effect.toCmd ( SharedEffect, Page ) effect
         ]
     )
 
@@ -61,6 +61,7 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | Shared Shared.Msg
+    | SharedEffect Shared.Effect
     | Page Pages.Msg
 
 
@@ -84,7 +85,7 @@ update msg model =
                         Pages.init (Route.fromUrl url) model.shared url model.key
                 in
                 ( { model | url = url, page = page }
-                , Effect.toCmd ( Shared, Page ) effect
+                , Effect.toCmd ( SharedEffect, Page ) effect
                 )
 
             else
@@ -102,7 +103,7 @@ update msg model =
                 ( { model | shared = shared, page = page }
                 , Cmd.batch
                     [ Cmd.map Shared sharedCmd
-                    , Effect.toCmd ( Shared, Page ) effect
+                    , Effect.toCmd ( SharedEffect, Page ) effect
                     ]
                 )
 
@@ -111,13 +112,20 @@ update msg model =
                 , Cmd.map Shared sharedCmd
                 )
 
+        SharedEffect effect ->
+            let
+                ( shared, sharedCmd ) =
+                    Shared.updateEffect effect model.shared
+            in
+            ( { model | shared = shared }, Cmd.map Shared sharedCmd )
+
         Page pageMsg ->
             let
                 ( page, effect ) =
                     Pages.update pageMsg model.page model.shared model.url model.key
             in
             ( { model | page = page }
-            , Effect.toCmd ( Shared, Page ) effect
+            , Effect.toCmd ( SharedEffect, Page ) effect
             )
 
 

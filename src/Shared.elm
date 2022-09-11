@@ -1,17 +1,24 @@
 module Shared exposing
-    ( Flags
+    ( Effect(..)
+    , Flags
     , Model
     , Msg
     , init
     , subscriptions
     , update
+    , updateEffect
+    , viewToasts
     )
 
 import Api.Category
 import Api.HttpClient
 import Category exposing (Category)
+import Dict exposing (Dict)
+import Html.Styled
 import Json.Decode as Json
+import Process
 import Request exposing (Request)
+import Task
 import Themes exposing (Theme)
 import UI.Toast
 import WebData exposing (WebData)
@@ -24,19 +31,27 @@ type alias Flags =
 type alias Model =
     { theme : Theme
     , availableCategories : WebData Api.HttpClient.Error (List Category)
-    , toasts : List UI.Toast.Model
+    , toasts : Dict Int UI.Toast.Model
+    , lastToastId : Int
     }
 
 
 type Msg
     = CompletedLoadCategories (Api.HttpClient.Response (List Category))
+    | StartedRemovingToast Int
+    | FinishedRemovingToast Int
+
+
+type Effect
+    = ShowToast UI.Toast.Variant String
 
 
 init : Request -> Flags -> ( Model, Cmd Msg )
 init _ _ =
     ( { theme = Themes.default
       , availableCategories = WebData.Loading
-      , toasts = []
+      , toasts = Dict.empty
+      , lastToastId = -1
       }
     , Api.Category.list CompletedLoadCategories
     )
@@ -51,7 +66,44 @@ update _ msg model =
         CompletedLoadCategories (Err err) ->
             ( { model | availableCategories = WebData.WithError err }, Cmd.none )
 
+        StartedRemovingToast toastId ->
+            ( { model
+                | toasts =
+                    Dict.update toastId
+                        (Maybe.map (\toast -> { toast | status = UI.Toast.Removing }))
+                        model.toasts
+              }
+            , Process.sleep 1000
+                |> Task.perform (\_ -> FinishedRemovingToast toastId)
+            )
+
+        FinishedRemovingToast toastId ->
+            ( { model | toasts = Dict.remove toastId model.toasts }, Cmd.none )
+
+
+updateEffect : Effect -> Model -> ( Model, Cmd Msg )
+updateEffect effect model =
+    case effect of
+        ShowToast variant message ->
+            ( { model
+                | toasts =
+                    Dict.insert (model.lastToastId + 1)
+                        (UI.Toast.idle variant message)
+                        model.toasts
+                , lastToastId = model.lastToastId + 1
+              }
+            , Process.sleep 3000
+                |> Task.perform (\_ -> StartedRemovingToast (model.lastToastId + 1))
+            )
+
 
 subscriptions : Request -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.none
+
+
+viewToasts : Model -> Html.Styled.Html msg
+viewToasts model =
+    model.toasts
+        |> Dict.values
+        |> UI.Toast.view model.theme
