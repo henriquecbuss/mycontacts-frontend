@@ -43,6 +43,7 @@ form theme { onSubmit, action, loading, state, fields } =
             ]
         , optionalAttribute Events.onSubmit onSubmit
         , Attributes.novalidate True
+        , Attributes.disabled (state == Form.View.Loading)
         ]
         (List.concat
             [ fields
@@ -125,45 +126,37 @@ inputField theme type_ { onChange, onBlur, disabled, value, error, showError, at
         [ css
             [ Css.position Css.relative
             , Css.display Css.block
-            , Css.pseudoClass "focus-within"
-                [ Css.Global.children
-                    [ Css.Global.div
-                        [ labelShownLabelStyle
-                        , Css.color focusedPlaceholderColor
+            , Css.Global.children
+                [ Css.Global.input
+                    [ Css.focus
+                        [ Css.Global.adjacentSiblings
+                            [ Css.Global.div
+                                [ labelShownLabelStyle
+                                , Css.color focusedPlaceholderColor
+                                , Css.after
+                                    [ Css.backgroundColor theme.colors.white
+                                    ]
+                                ]
+                            ]
+                        ]
+                    , Css.disabled
+                        [ Css.Global.adjacentSiblings
+                            [ Css.Global.div
+                                [ Css.after
+                                    [ if String.isEmpty value then
+                                        Css.batch []
+
+                                      else
+                                        Css.backgroundColor theme.colors.gray.lightest
+                                    ]
+                                ]
+                            ]
                         ]
                     ]
                 ]
             ]
         ]
-        [ Html.Styled.div
-            [ css
-                [ Css.position Css.absolute
-                , Css.cursor Css.text_
-                , Css.color placeholderColor
-                , Css.transform (Css.translate2 (Css.px 18) (Css.px 18))
-                , Css.Transitions.transition
-                    [ Css.Transitions.transform3 75 0 Css.Transitions.linear
-                    ]
-                , if String.isEmpty value then
-                    Css.batch []
-
-                  else
-                    labelShownLabelStyle
-                , Css.after
-                    [ Css.property "content" "''"
-                    , Css.zIndex (Css.int -1)
-                    , Css.position Css.absolute
-                    , Css.top (Css.px 13)
-                    , Css.right (Css.px -sidePadding)
-                    , Css.transform (Css.translateY (Css.pct -50))
-                    , Css.height theme.borderWidth
-                    , Css.width (Css.calc (Css.pct 100) Css.plus (Css.px (2 * sidePadding)))
-                    , Css.backgroundColor theme.colors.white
-                    ]
-                ]
-            ]
-            [ Html.Styled.text attributes.label ]
-        , Html.Styled.input
+        [ Html.Styled.input
             [ Attributes.value value
             , Events.onInput onChange
             , optionalAttribute Events.onBlur onBlur
@@ -184,9 +177,46 @@ inputField theme type_ { onChange, onBlur, disabled, value, error, showError, at
                 , Css.pseudoElement "placeholder"
                     [ Css.color placeholderColor
                     ]
+                , Css.disabled
+                    [ Css.backgroundColor theme.colors.gray.lightest
+                    ]
                 ]
             ]
             []
+        , Html.Styled.div
+            [ css
+                [ Css.position Css.absolute
+                , Css.top (Css.px 0)
+                , Css.left (Css.px 0)
+                , Css.cursor Css.text_
+                , Css.color placeholderColor
+                , Css.transform (Css.translate2 (Css.px 18) (Css.px 18))
+                , Css.Transitions.transition
+                    [ Css.Transitions.transform3 75 0 Css.Transitions.linear
+                    ]
+                , if String.isEmpty value then
+                    Css.batch []
+
+                  else
+                    labelShownLabelStyle
+                , Css.after
+                    [ Css.property "content" "''"
+                    , Css.zIndex (Css.int -1)
+                    , Css.position Css.absolute
+                    , Css.top (Css.px 13)
+                    , Css.right (Css.px -sidePadding)
+                    , Css.transform (Css.translateY (Css.pct -50))
+                    , Css.height theme.borderWidth
+                    , Css.width (Css.calc (Css.pct 100) Css.plus (Css.px (2 * sidePadding)))
+                    , if String.isEmpty value then
+                        Css.batch []
+
+                      else
+                        Css.backgroundColor theme.colors.white
+                    ]
+                ]
+            ]
+            [ Html.Styled.text attributes.label ]
         , case maybeErrorMessage showError error of
             Nothing ->
                 text ""
@@ -312,6 +342,9 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
                     [ Css.Global.div
                         [ labelShownLabelStyle
                         , Css.color focusedPlaceholderColor
+                        , Css.after
+                            [ Css.backgroundColor theme.colors.white
+                            ]
                         ]
                     ]
                 , Css.Global.descendants
@@ -320,37 +353,31 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
                         ]
                     ]
                 ]
-            ]
-        ]
-        [ Html.Styled.div
-            [ css
-                [ Css.position Css.absolute
-                , Css.cursor Css.text_
-                , Css.color placeholderColor
-                , Css.transform (Css.translate2 (Css.px 16) (Css.px 16))
-                , Css.Transitions.transition
-                    [ Css.Transitions.transform3 75 0 Css.Transitions.linear
-                    ]
-                , if hasValue then
-                    labelShownLabelStyle
+            , Css.Global.children
+                [ Css.Global.select
+                    [ Css.disabled
+                        [ Css.Global.adjacentSiblings
+                            [ Css.Global.div
+                                [ Css.after
+                                    [ if hasValue then
+                                        Css.backgroundColor theme.colors.gray.lightest
 
-                  else
-                    Css.batch []
-                , Css.after
-                    [ Css.property "content" "''"
-                    , Css.zIndex (Css.int -1)
-                    , Css.position Css.absolute
-                    , Css.top (Css.px 13)
-                    , Css.right (Css.px -sidePadding)
-                    , Css.transform (Css.translateY (Css.pct -50))
-                    , Css.height theme.borderWidth
-                    , Css.width (Css.calc (Css.pct 100) Css.plus (Css.px (2 * sidePadding)))
-                    , Css.backgroundColor theme.colors.white
+                                      else
+                                        Css.batch []
+                                    ]
+                                ]
+                            ]
+                        , Css.Global.generalSiblings
+                            [ Css.Global.span
+                                [ Css.backgroundColor theme.colors.gray.lightest
+                                ]
+                            ]
+                        ]
                     ]
                 ]
             ]
-            [ Html.Styled.text attributes.label ]
-        , Html.Styled.select
+        ]
+        [ Html.Styled.select
             [ Attributes.value value
             , Attributes.placeholder attributes.label
             , Attributes.disabled disabled
@@ -372,6 +399,9 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
                 , Css.pseudoElement "placeholder"
                     [ Css.color placeholderColor
                     ]
+                , Css.disabled
+                    [ Css.backgroundColor theme.colors.gray.lightest
+                    ]
                 ]
             ]
             (Html.Styled.option [] []
@@ -385,6 +415,40 @@ selectField theme { onChange, onBlur, disabled, value, error, showError, attribu
                     )
                     attributes.options
             )
+        , Html.Styled.div
+            [ css
+                [ Css.position Css.absolute
+                , Css.top (Css.px 0)
+                , Css.left (Css.px 0)
+                , Css.cursor Css.text_
+                , Css.color placeholderColor
+                , Css.transform (Css.translate2 (Css.px 16) (Css.px 16))
+                , Css.Transitions.transition
+                    [ Css.Transitions.transform3 75 0 Css.Transitions.linear
+                    ]
+                , if hasValue then
+                    labelShownLabelStyle
+
+                  else
+                    Css.batch []
+                , Css.after
+                    [ Css.property "content" "''"
+                    , Css.zIndex (Css.int -1)
+                    , Css.position Css.absolute
+                    , Css.top (Css.px 13)
+                    , Css.right (Css.px -sidePadding)
+                    , Css.transform (Css.translateY (Css.pct -50))
+                    , Css.height theme.borderWidth
+                    , Css.width (Css.calc (Css.pct 100) Css.plus (Css.px (2 * sidePadding)))
+                    , if hasValue then
+                        Css.backgroundColor theme.colors.white
+
+                      else
+                        Css.batch []
+                    ]
+                ]
+            ]
+            [ Html.Styled.text attributes.label ]
         , Html.Styled.span
             [ css
                 [ Css.position Css.absolute
