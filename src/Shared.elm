@@ -108,7 +108,7 @@ viewToasts model =
         |> Dict.toList
         |> List.map
             (\( id, toast ) ->
-                ( id
+                ( String.fromInt id
                 , { onRemove = StartedRemovingToast id
                   , toast = toast
                   }

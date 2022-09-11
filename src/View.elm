@@ -1,7 +1,7 @@
 module View exposing (View, map, none, placeholder, toBrowserDocument)
 
 import Browser
-import Css exposing (backgroundColor, borderBox, boxSizing, color, fontFamilies, fontSize, margin, padding, px, sansSerif, zero)
+import Css exposing (backgroundColor, border, borderBox, boxSizing, color, fontFamilies, fontSize, margin, padding, px, rem, sansSerif, zero)
 import Css.Global exposing (body, everything, global)
 import Html.Styled exposing (div, img)
 import Html.Styled.Attributes exposing (css, src)
@@ -41,9 +41,10 @@ toBrowserDocument shared fromSharedMsg view =
             [ everything
                 [ margin zero
                 , padding zero
+                , border zero
                 , boxSizing borderBox
                 , fontFamilies [ "Sora", sansSerif.value ]
-                , fontSize (px 16)
+                , fontSize (rem 1)
                 ]
             , body
                 [ backgroundColor shared.theme.colors.background

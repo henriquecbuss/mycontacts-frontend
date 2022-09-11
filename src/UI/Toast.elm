@@ -7,6 +7,7 @@ import Html.Styled exposing (button, div, li, text)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (onClick)
 import Html.Styled.Keyed
+import Json.Encode
 import Themes exposing (Theme)
 import UI.Animations
 import UI.Icons
@@ -38,7 +39,7 @@ idle variant message =
     }
 
 
-view : Theme -> List ( Int, { onRemove : msg, toast : Model } ) -> Html.Styled.Html msg
+view : Theme -> List ( String, { onRemove : msg, toast : Model } ) -> Html.Styled.Html msg
 view theme toasts =
     Html.Styled.Keyed.ul
         [ css [ Css.property "isolation" "isolate" ]
@@ -48,7 +49,7 @@ view theme toasts =
             |> List.reverse
             |> List.indexedMap
                 (\index ( toastId, { onRemove, toast } ) ->
-                    ( String.fromInt toastId
+                    ( toastId
                     , viewSingle theme index onRemove toast
                     )
                 )
@@ -102,7 +103,6 @@ viewSingle theme index onRemove model =
                     , Css.fontWeight Css.bold
                     , Css.color theme.colors.white
                     , Css.borderRadius theme.borderRadius
-                    , Css.border Css.zero
                     , Css.displayFlex
                     , Css.alignItems Css.center
                     , Css.justifyContent Css.center
@@ -162,6 +162,7 @@ viewSingle theme index onRemove model =
 
                     Removing ->
                         css []
+                , Html.Styled.Attributes.property "role" (Json.Encode.string "alert")
                 ]
                 [ case model.variant of
                     Default ->
