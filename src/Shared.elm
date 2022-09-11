@@ -102,8 +102,16 @@ subscriptions _ _ =
     Sub.none
 
 
-viewToasts : Model -> Html.Styled.Html msg
+viewToasts : Model -> Html.Styled.Html Msg
 viewToasts model =
     model.toasts
         |> Dict.toList
+        |> List.map
+            (\( id, toast ) ->
+                ( id
+                , { onRemove = StartedRemovingToast id
+                  , toast = toast
+                  }
+                )
+            )
         |> UI.Toast.view model.theme

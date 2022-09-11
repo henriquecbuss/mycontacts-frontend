@@ -29,8 +29,12 @@ map fn view =
     List.map (Html.Styled.map fn) view
 
 
-toBrowserDocument : Shared.Model -> View msg -> Browser.Document msg
-toBrowserDocument shared view =
+toBrowserDocument :
+    Shared.Model
+    -> (Shared.Msg -> msg)
+    -> View msg
+    -> Browser.Document msg
+toBrowserDocument shared fromSharedMsg view =
     { title = "MyContacts"
     , body =
         [ global
@@ -48,6 +52,7 @@ toBrowserDocument shared view =
             ]
         , defaultContainer (header :: view)
         , Shared.viewToasts shared
+            |> Html.Styled.map fromSharedMsg
         ]
             |> List.map Html.Styled.toUnstyled
     }

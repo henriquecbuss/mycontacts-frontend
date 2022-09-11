@@ -21,7 +21,8 @@ type alias Theme =
             , dark : Css.Color
             }
         , success :
-            { main : Css.Color
+            { light : Css.Color
+            , main : Css.Color
             }
         , gray :
             { lightest : Css.Color
@@ -54,7 +55,8 @@ default =
             , dark = Css.hex "f63131"
             }
         , success =
-            { main = Css.hex "51ca73"
+            { light = Css.hex "63cc81"
+            , main = Css.hex "51ca73"
             }
         , gray =
             { lightest = Css.hex "dfdfdf"
