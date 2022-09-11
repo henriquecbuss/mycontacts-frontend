@@ -55,7 +55,7 @@ init contactId =
 
 type Msg
     = FormChanged Contact.Model (Form.View.Model Contact.Input)
-    | SubmittedForm Contact.Model Contact.Output
+    | SubmittedForm Contact.Output
     | CompletedLoadContact (Api.HttpClient.Response Contact.Model)
     | CompletedSaveContact (Api.HttpClient.Response Contact.Model)
 
@@ -66,11 +66,16 @@ update req msg model =
         FormChanged contact newForm ->
             ( Loaded contact newForm, Effect.none )
 
-        SubmittedForm contact contactOutput ->
-            ( model
-            , Api.Contact.update contact contactOutput CompletedSaveContact
-                |> Effect.fromCmd
-            )
+        SubmittedForm contactOutput ->
+            case model of
+                Loaded contact formModel ->
+                    ( Loaded contact { formModel | state = Form.View.Loading }
+                    , Api.Contact.update contact contactOutput CompletedSaveContact
+                        |> Effect.fromCmd
+                    )
+
+                Loading ->
+                    ( model, Effect.none )
 
         CompletedLoadContact (Ok contact) ->
             ( Loaded contact (Contact.formFromContact contact), Effect.none )
@@ -85,17 +90,22 @@ update req msg model =
                 ]
             )
 
-        CompletedSaveContact (Ok _) ->
-            ( model
+        CompletedSaveContact (Ok newContact) ->
+            ( Loaded newContact (Contact.formFromContact newContact)
             , Shared.ShowToast UI.Toast.Success "Contato atualizado"
                 |> Effect.fromShared
             )
 
         CompletedSaveContact (Err err) ->
-            ( model
-            , Shared.ShowToast UI.Toast.Error "Ocorreu um erro ao atualizar o contato"
-                |> Effect.fromShared
-            )
+            case model of
+                Loaded contact formModel ->
+                    ( Loaded contact (Contact.formFromContact contact)
+                    , Shared.ShowToast UI.Toast.Error "Ocorreu um erro ao atualizar o contato"
+                        |> Effect.fromShared
+                    )
+
+                _ ->
+                    ( model, Effect.none )
 
 
 
@@ -132,7 +142,7 @@ view shared model =
                 , validation = Form.View.ValidateOnBlur
                 }
                 (Contact.form categories
-                    |> Form.map (SubmittedForm contact)
+                    |> Form.map SubmittedForm
                 )
                 contactForm
             ]
