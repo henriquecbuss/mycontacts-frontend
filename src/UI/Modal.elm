@@ -22,6 +22,7 @@ type Modal constraints msg
     = Modal
         { header : Maybe String
         , body : Maybe String
+        , cancelAction : String
         , action : Maybe { text : String, toMsg : msg }
         , variant : UI.Variant
         , onClose : msg
@@ -38,6 +39,7 @@ init onClose =
     Modal
         { header = Nothing
         , body = Nothing
+        , cancelAction = "Cancelar"
         , action = Nothing
         , variant = UI.Primary
         , onClose = onClose
@@ -57,6 +59,11 @@ withHeader header (Modal modal) =
 withBody : String -> Modal constraints msg -> Modal { contraints | hasContent : () } msg
 withBody body (Modal modal) =
     Modal { modal | body = Just body }
+
+
+withCancelAction : String -> Modal constraints msg -> Modal constraints msg
+withCancelAction cancelAction (Modal modal) =
+    Modal { modal | cancelAction = cancelAction }
 
 
 withAction : String -> msg -> Modal constraints msg -> Modal constraints msg
@@ -133,7 +140,7 @@ view theme (Modal modal) =
                     (\body ->
                         p
                             [ css
-                                [ Css.marginTop (Css.rem 0.5)
+                                [ Css.marginTop (Css.rem 2)
                                 ]
                             ]
                             [ text body ]
@@ -163,7 +170,7 @@ view theme (Modal modal) =
                                 ]
                             ]
                         ]
-                        [ text "Cancelar" ]
+                        [ text modal.cancelAction ]
                     , optionalElement modal.action
                         (\action ->
                             UI.button theme
@@ -171,7 +178,7 @@ view theme (Modal modal) =
                                 { onClick = Just action.toMsg
                                 , disabled = False
                                 }
-                                [ Css.marginLeft (Css.rem 0.5)
+                                [ Css.marginLeft (Css.rem 2)
                                 , Css.paddingTop (Css.px 10)
                                 , Css.paddingBottom (Css.px 10)
                                 ]
